@@ -1,0 +1,53 @@
+reactiveclass Sensor(1) {
+    knownrebecs { Controller controller; }
+    statevars { boolean isTriggered = false; }
+
+    msgsrv trigger() {
+        isTriggered = true;
+        controller.sensorTriggered(self).after(1);
+    }
+
+    msgsrv reset() {
+        isTriggered = false;
+    }
+}
+
+reactiveclass Alarm(1) {
+    knownrebecs { Controller controller; }
+    statevars { boolean isOn = false; }
+
+    msgsrv turnOn() {
+        isOn = true;
+        controller.alarmActivated().after(5);
+    }
+
+    msgsrv turnOff() {
+        isOn = false;
+    }
+}
+
+reactiveclass Controller(1) {
+    knownrebecs { Alarm alarm; Sensor sensor; }
+
+    msgsrv startAlarm() {
+        alarm.turnOn();
+    }
+
+    msgsrv stopAlarm() {
+        alarm.turnOff();
+    }
+
+    msgsrv sensorTriggered(Sensor sensor) {
+        if (!alarm.isOn) {
+            startAlarm();
+        }
+    }
+
+    msgsrv alarmActivated() {
+        // Handle the alarm activation
+    }
+}
+
+main {
+    
+}

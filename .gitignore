@@ -30,3 +30,29 @@
 *.exe
 *.out
 *.app
+progress
+execute
+
+# Folders
+.vscode/*
+.settings
+*.spec
+build/*
+.project
+
+
+# LF
+LF/bin/*
+LF/lib/*
+LF/out/*
+LF/share/*
+LF/build/*
+LF/include/*
+LF/src-gen/*
+LF/lib64/*
+.lf-cpp-marker
+*.xml
+*.json
+*.txt
+
+CMakeLists.txt
