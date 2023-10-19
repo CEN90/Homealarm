@@ -1,8 +1,97 @@
-reactiveclass Sensor(1) {
-    knownrebecs { Controller controller; }
-    statevars { boolean isTriggered = false; }
+env int doorSensor_id = 1;
+env int windowSensor_id = 2;
 
-    msgsrv trigger() {
+env int user_key = 3;
+env int user_code = 4;
+env int allowed_attempts = 5;
+
+reactiveclass Controller(5) {
+    knownrebecs { 
+        Alarm alarm; 
+        Sensor sensor; 
+    }
+    statevars {
+        boolean armed = false;
+        boolean door_open = false;
+        boolean window_open = false;
+       
+    }
+
+    msgsrv authenticatedUser(){
+        if (!armed){
+            if (door_open || window_open){
+                //panic!!!!!!!
+            }
+        } else {
+            armed = false;
+        }
+
+    }
+
+    msgsrv setUnActive(){
+
+    } 
+
+    msgsrv setSensorState(int sensor, boolean state){
+        switch(sensor) {
+            case windowSensor_id:
+      
+                window_open = state;
+                break;
+            case doorSensor_id:
+                
+                door_open = state;
+                break;
+            
+            default:
+                
+        }
+
+    }
+}
+
+
+reactiveclass Sensor(1) {
+    knownrebecs { 
+        Controller controller; 
+    }
+    statevars { 
+        boolean isOpen = false; 
+        int sensor_id = 0;     
+    }
+
+    Sensor(int id){
+        sensor_id = id; 
+    }
+
+    msgsrv opened() {
+        isOpen = true;
+        self.notifyController();
+    }
+
+    msgsrv closed() {
+        isOpen = false;
+        self.notifyController();
+    }
+
+    msgsrv notifyController() {
+        controller.setSensorState(sensor_id, isOpen)
+    }
+
+    msgsrv reset() {
+        isOpen = false;
+    }
+}
+
+reactiveclass MotionSensor(1) {
+    knownrebecs { 
+        Controller controller; 
+    }
+    statevars { 
+        boolean isTriggered = false; 
+        }
+
+    msgsrv isTriggered() {
         isTriggered = true;
         controller.sensorTriggered(self).after(1);
     }
@@ -12,41 +101,63 @@ reactiveclass Sensor(1) {
     }
 }
 
-reactiveclass Alarm(1) {
-    knownrebecs { Controller controller; }
-    statevars { boolean isOn = false; }
 
-    msgsrv turnOn() {
-        isOn = true;
-        controller.alarmActivated().after(5);
+reactiveclass Authentication(1) {
+    knownrebecs{
+        Controller controller;
+        }
+    statevars {
+        boolean auth_key = false;
+        int valid_key = 0;
+        int valid_code = 0;
+        int attempts = 0;
     }
 
-    msgsrv turnOff() {
-        isOn = false;
-    }
-}
-
-reactiveclass Controller(1) {
-    knownrebecs { Alarm alarm; Sensor sensor; }
-
-    msgsrv startAlarm() {
-        alarm.turnOn();
+    Authentication(int key, int code) {
+        valid_key = key;
+        valid_code = code; 
     }
 
-    msgsrv stopAlarm() {
-        alarm.turnOff();
-    }
-
-    msgsrv sensorTriggered(Sensor sensor) {
-        if (!alarm.isOn) {
-            startAlarm();
+    msgsrv checkKey(int key) {
+        if (auth_key == valid_key) {
+            auth_key = true; 
+        } else {
+            auth_key = false;
         }
     }
 
-    msgsrv alarmActivated() {
-        // Handle the alarm activation
+    msgsrv authenticate(int code, int key) {
+        attempts += 1;
+        self.checkKey(key); //check if key true or not
+
+        if (attempts > allowed_attempts) {
+            auth_key = false;
+        }
+
+        if (auth_key) {
+            if (code == valid_code) {
+                controller.authenticatedUser();
+                auth_key = false;
+                attempts = 0;
+            } 
+        }
     }
 }
+
+// reactiveclass Alarm(1) {
+//     knownrebecs { Controller controller; }
+//     statevars { boolean isOn = false; }
+
+//     msgsrv turnOn() {
+//         isOn = true;
+//         controller.alarmActivated().after(5);
+//     }
+
+//     msgsrv turnOff() {
+//         isOn = false;
+//     }
+// }
+
 
 main {
     
