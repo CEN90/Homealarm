@@ -5,53 +5,57 @@ env int user_key = 3;
 env int user_code = 4;
 env int allowed_attempts = 5;
 
-reactiveclass Controller(5) {
+reactiveclass Controller(10) {
     knownrebecs { 
-        Alarm alarm; 
-        Sensor sensor; 
+        Sensor window_sensor, door_sensor; 
+        MotionSensor motion;
+        Authentication authentication;
     }
     statevars {
         boolean armed = false;
         boolean door_open = false;
         boolean window_open = false;
+        boolean alarm = false; 
        
     }
 
     msgsrv authenticatedUser(){
         if (!armed){
             if (door_open || window_open){
-                //panic!!!!!!!
+                //notify error, you work now, faster
             }
         } else {
             armed = false;
         }
-
     }
 
-    msgsrv setUnActive(){
-
-    } 
-
     msgsrv setSensorState(int sensor, boolean state){
-        switch(sensor) {
-            case windowSensor_id:
-      
-                window_open = state;
-                break;
-            case doorSensor_id:
-                
-                door_open = state;
-                break;
-            
-            default:
-                
+        if (sensor == windowSensor_id){
+            window_open = state;
+        }
+        
+        if (sensor == doorSensor_id) {
+            door_open = state; 
+        }
+        
+        //panic!!!!!!!!!!!! *imagine kermit flapping with his arms
+    }
+
+    msgsrv detectMotion() {
+        if (armed) {
+            self.turnOnAlarm();
         }
 
     }
+    msgsrv turnOnAlarm() {
+        alarm = true; 
+    }
+    msgsrv turnOffAlarm() {
+        alarm = false; 
+    }
 }
 
-
-reactiveclass Sensor(1) {
+reactiveclass Sensor(5) {
     knownrebecs { 
         Controller controller; 
     }
@@ -83,7 +87,7 @@ reactiveclass Sensor(1) {
     }
 }
 
-reactiveclass MotionSensor(1) {
+reactiveclass MotionSensor(5) {
     knownrebecs { 
         Controller controller; 
     }
@@ -93,7 +97,7 @@ reactiveclass MotionSensor(1) {
 
     msgsrv isTriggered() {
         isTriggered = true;
-        controller.sensorTriggered(self).after(1);
+        controller.detectMotion();
     }
 
     msgsrv reset() {
@@ -101,8 +105,7 @@ reactiveclass MotionSensor(1) {
     }
 }
 
-
-reactiveclass Authentication(1) {
+reactiveclass Authentication(5) {
     knownrebecs{
         Controller controller;
         }
@@ -144,21 +147,10 @@ reactiveclass Authentication(1) {
     }
 }
 
-// reactiveclass Alarm(1) {
-//     knownrebecs { Controller controller; }
-//     statevars { boolean isOn = false; }
-
-//     msgsrv turnOn() {
-//         isOn = true;
-//         controller.alarmActivated().after(5);
-//     }
-
-//     msgsrv turnOff() {
-//         isOn = false;
-//     }
-// }
-
-
 main {
-    
+    Controller controller(w_sensor, d_sensor, m_sensor, authentication):();
+    Sensor w_sensor(controller):(windowSensor_id);
+    Sensor d_sensor(controller):(doorSensor_id);
+    MotionSensor m_sensor(controller):();
+    Authentication authentication(controller):(user_key, user_code);
 }
