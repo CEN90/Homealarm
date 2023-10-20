@@ -12,11 +12,17 @@ reactiveclass Controller(10) {
         Authentication authentication;
     }
     statevars {
-        boolean armed = false;
-        boolean door_open = false;
-        boolean window_open = false;
-        boolean alarm = false; 
-       
+        boolean armed;
+        boolean door_open;
+        boolean window_open;
+        boolean alarm; 
+    }
+    
+    Controller() {
+    	armed = false;
+        door_open = false;
+        window_open = false;
+        alarm = false; 
     }
 
     msgsrv authenticatedUser(){
@@ -45,11 +51,12 @@ reactiveclass Controller(10) {
         if (armed) {
             self.turnOnAlarm();
         }
-
     }
+    
     msgsrv turnOnAlarm() {
         alarm = true; 
     }
+    
     msgsrv turnOffAlarm() {
         alarm = false; 
     }
@@ -60,12 +67,13 @@ reactiveclass Sensor(5) {
         Controller controller; 
     }
     statevars { 
-        boolean isOpen = false; 
-        int sensor_id = 0;     
+        boolean isOpen; 
+        int sensor_id;     
     }
 
     Sensor(int id){
         sensor_id = id; 
+        isOpen = false; 
     }
 
     msgsrv opened() {
@@ -79,7 +87,7 @@ reactiveclass Sensor(5) {
     }
 
     msgsrv notifyController() {
-        controller.setSensorState(sensor_id, isOpen)
+        controller.setSensorState(sensor_id, isOpen);
     }
 
     msgsrv reset() {
@@ -92,7 +100,7 @@ reactiveclass MotionSensor(5) {
         Controller controller; 
     }
     statevars { 
-        boolean isTriggered = false; 
+        boolean isTriggered; 
         }
 
     msgsrv isTriggered() {
@@ -110,19 +118,21 @@ reactiveclass Authentication(5) {
         Controller controller;
         }
     statevars {
-        boolean auth_key = false;
-        int valid_key = 0;
-        int valid_code = 0;
-        int attempts = 0;
+        boolean auth_key;
+        int valid_key;
+        int valid_code;
+        int attempts;
     }
 
     Authentication(int key, int code) {
         valid_key = key;
         valid_code = code; 
+     	attempts = 0;   
+       	auth_key = false;
     }
 
     msgsrv checkKey(int key) {
-        if (auth_key == valid_key) {
+        if (key == valid_key) {
             auth_key = true; 
         } else {
             auth_key = false;

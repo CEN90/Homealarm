@@ -40,6 +40,13 @@ execute
 build/*
 .project
 
+# Afra
+*.cpp
+*.h
+
+# ta bort innan publicering
+*.statespace
+
 
 # LF
 LF/bin/*
