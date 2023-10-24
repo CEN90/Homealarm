@@ -5,6 +5,9 @@ env int user_key = 3;
 env int user_code = 4;
 env int allowed_attempts = 5;
 
+env int user_time_before_code = 2;
+env int user_time_entering_code = 3;
+
 reactiveclass Controller(10) {
     knownrebecs { 
         Sensor window_sensor, door_sensor; 
@@ -16,13 +19,19 @@ reactiveclass Controller(10) {
         boolean door_open;
         boolean window_open;
         boolean alarm; 
+        boolean motion_triggered; 
+        boolean door_locked;
     }
     
     Controller() {
-    	armed = false;
-        door_open = false;
-        window_open = false;
-        alarm = false; 
+        self.reset();
+    	// armed = false;
+        // door_open = false;
+        // window_open = false;
+        // alarm = false; 
+        // motion_triggered = false;
+        // door_locked = false;
+
     }
 
     msgsrv authenticatedUser(){
@@ -30,6 +39,10 @@ reactiveclass Controller(10) {
             if (door_open || window_open){
                 //notify error, you work now, faster
             }
+            
+            armed = true;
+            door_locked = true;
+        
         } else {
             armed = false;
         }
@@ -50,6 +63,7 @@ reactiveclass Controller(10) {
     msgsrv detectMotion() {
         if (armed) {
             self.turnOnAlarm();
+            motion_triggered = true; 
         }
     }
     
@@ -58,8 +72,18 @@ reactiveclass Controller(10) {
     }
     
     msgsrv turnOffAlarm() {
-        alarm = false; 
+        self.reset();
     }
+
+    msgsrv reset() {
+        armed = false;
+        door_open = false;
+        window_open = false;
+        alarm = false; 
+        motion_triggered = false; 
+        door_locked = false;
+    }
+    
 }
 
 reactiveclass Sensor(5) {
@@ -103,7 +127,7 @@ reactiveclass MotionSensor(5) {
         boolean isTriggered; 
         }
 
-    msgsrv isTriggered() {
+    msgsrv setTriggered() {
         isTriggered = true;
         controller.detectMotion();
     }
@@ -139,9 +163,16 @@ reactiveclass Authentication(5) {
         }
     }
 
-    msgsrv authenticate(int code, int key) {
+    msgsrv checkCode(int code) {
+        if (auth_key) {
+            self.authenticate(code);
+        }
+
+        auth_key = false;
+    }
+
+    msgsrv authenticate(int code) {
         attempts += 1;
-        self.checkKey(key); //check if key true or not
 
         if (attempts > allowed_attempts) {
             auth_key = false;
@@ -157,10 +188,57 @@ reactiveclass Authentication(5) {
     }
 }
 
+reactiveclass User(5) {
+    knownrebecs { 
+        Sensor window_sensor, door_sensor;
+        MotionSensor motion_sensor; 
+        Authentication authentication;
+    }
+    statevars {
+        boolean door_locked;
+        int _key, _code;
+    }
+
+    User(int key, int code) {
+        door_locked = false;
+        _key = key;
+        _code = code;
+    }
+
+    msgsrv scenario() {
+        self.pokesLock();
+    }
+
+    msgsrv breakWindow() {
+        window_sensor.opened();
+    }
+
+    msgsrv breakDoor() {
+        door_sensor.opened();
+    }   
+
+    msgsrv breakDances() {
+        motion_sensor.setTriggered();
+    } 
+
+    msgsrv pokesLock() {
+        // scanna bricka
+        // skriv in kod
+
+        authentication.checkKey(user_key);
+        authentication.checkCode(user_code) after(user_time_before_code);
+        door_locked = !door_locked;
+    }
+
+
+}
+
 main {
     Controller controller(w_sensor, d_sensor, m_sensor, authentication):();
     Sensor w_sensor(controller):(windowSensor_id);
     Sensor d_sensor(controller):(doorSensor_id);
     MotionSensor m_sensor(controller):();
     Authentication authentication(controller):(user_key, user_code);
+
+    User user(w_sensor, d_sensor, m_sensor, authentication):(user_key, user_code);
 }

@@ -1,4 +1,14 @@
-property { 
+property {
+    define {
+        triggered = controller.door_open || controller.window_open || controller.motion_triggered;
+       	armed = controller.armed;
+		locked = controller.door_locked;
+		alarm = controller.alarm;
+    }
 
-
+    Assertion {
+        safety_prop1: !(armed && triggered && alarm); // armed and sensors triggered should lead to alarm
+        safety_prop2: !(armed && locked); // armed and door is locked
+        safety_prop3: !armed && !locked; // unarmed and door is unlocked 
+    }
 }
