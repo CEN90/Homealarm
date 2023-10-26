@@ -1,5 +1,7 @@
 property {
+
     define {
+        //sens_trig = m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen; 
         triggered = controller.door_open || controller.window_open || controller.motion_triggered;
        	armed = controller.armed;
 		locked = controller.door_locked;
@@ -7,8 +9,9 @@ property {
     }
 
     Assertion {
-        safety_prop1: !(armed && triggered && alarm); // armed and sensors triggered should lead to alarm
-        safety_prop2: !(armed && locked); // armed and door is locked
-        safety_prop3: !armed && !locked; // unarmed and door is unlocked 
+        //safety_prop1: !(armed && triggered && alarm); // armed and sensors triggered should lead to alarm, after n time
+        //safety_prop2: !(armed && locked); // armed and door is locked
+        //safety_prop3: !(armed && triggered); // unarmed and door is unlocked 
+        safety_prop4: !(alarm && triggered);
     }
 }
