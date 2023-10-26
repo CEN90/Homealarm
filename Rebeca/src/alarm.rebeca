@@ -14,6 +14,7 @@ reactiveclass Controller(10) {
         MotionSensor motion;
         Authentication authentication;
     }
+
     statevars {
         boolean armed;
         boolean door_open;
@@ -34,8 +35,8 @@ reactiveclass Controller(10) {
 
     }
 
-    msgsrv authenticatedUser(){
-        if (!armed){
+    msgsrv authenticatedUser() {
+        if (!armed) {
             if (door_open || window_open){
                 //notify error, you work now, faster
             }
@@ -49,7 +50,7 @@ reactiveclass Controller(10) {
     }
 
     msgsrv setSensorState(int sensor, boolean state){
-        if (sensor == windowSensor_id){
+        if (sensor == windowSensor_id) {
             window_open = state;
         }
         
@@ -90,6 +91,7 @@ reactiveclass Sensor(5) {
     knownrebecs { 
         Controller controller; 
     }
+
     statevars { 
         boolean isOpen; 
         int sensor_id;     
@@ -123,9 +125,10 @@ reactiveclass MotionSensor(5) {
     knownrebecs { 
         Controller controller; 
     }
+
     statevars { 
         boolean isTriggered; 
-        }
+    }
 
     msgsrv setTriggered() {
         isTriggered = true;
@@ -140,7 +143,8 @@ reactiveclass MotionSensor(5) {
 reactiveclass Authentication(5) {
     knownrebecs{
         Controller controller;
-        }
+    }
+
     statevars {
         boolean auth_key;
         int valid_key;
