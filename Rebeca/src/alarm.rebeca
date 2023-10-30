@@ -26,7 +26,12 @@ reactiveclass Controller(10) {
     }
     
     Controller() {
-        self.reset();
+        armed = false;
+        door_open = false;
+        window_open = false;
+        alarm = false; 
+        motion_triggered = false; 
+        door_locked = false;
     }
 
     msgsrv authenticatedUser() {
@@ -80,18 +85,8 @@ reactiveclass Controller(10) {
     }
     
     msgsrv turnOffAlarm() {
-        self.reset();
-    }
-
-    msgsrv reset() {
-        armed = false;
-        door_open = false;
-        window_open = false;
         alarm = false; 
-        motion_triggered = false; 
-        door_locked = false;
     }
-    
 }
 
 reactiveclass Sensor(5) {
@@ -100,27 +95,31 @@ reactiveclass Sensor(5) {
     }
 
     statevars { 
-        //boolean isOpen; 
+        boolean isOpen; 
         int sensor_id;     
     }
 
     Sensor(int id){
         sensor_id = id; 
-        // isOpen = false; 
+        isOpen = false; 
     }
 
     msgsrv opened() {
         // isOpen = true;
         // self.notifyController();
         controller.setSensorState(sensor_id, true);
-
+        self.setState(true) after(1);
     }
 
     msgsrv closed() {
         // isOpen = false;
         // self.notifyController();
         controller.setSensorState(sensor_id, false);
+        self.setState(false) after(1);
+    }
 
+    msgsrv setState(boolean state) {
+        isOpen = state;
     }
 
     // msgsrv notifyController() {

@@ -1,7 +1,7 @@
 property {
 
     define {
-       // sens_trig = m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen; 
+        // sens_trig = m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen; 
         //triggered = controller.door_open || controller.window_open || controller.motion_triggered;
        	//armed = controller.armed;
 		//locked = controller.door_locked;
@@ -12,7 +12,22 @@ property {
         	&& !(controller.door_open || controller.window_open || controller.motion_triggered) 
         	&& !controller.alarm
         ); 
+       
+        oneSens = (
+        	controller.armed 
+        	&& (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen) 
+        	&& !controller.alarm
+        ); 
         
+        NotoneSens = (
+        	!controller.armed 
+        	// && !(m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen) 
+        	&& controller.alarm
+        ); 
+        
+        a = controller.alarm && !(controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen));
+        
+        b= !controller.alarm && (controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen));
     }
 
     Assertion {
@@ -21,7 +36,10 @@ property {
         //safety_prop3: !(armed && triggered); // unarmed and door is unlocked 
         // safety_prop4: !(alarm && triggered);
 
-        safety_prop1: !one; 
+        // safety_prop1: one; 
+        //safety_prop2: oneSens; 
+        //safety_prop3: (!controller.armed && !controller.alarm && !w_sensor.isOpen); 
+         safety_prop1: a || b;
 
         
     }
