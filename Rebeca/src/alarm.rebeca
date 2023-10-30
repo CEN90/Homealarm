@@ -214,6 +214,8 @@ reactiveclass User(5) {
     	self.pokesLock(); // after(15);  // locks the door
     	//delay(50);
     	//self.breakWindow(); // after(45); 
+    	
+    	self.scenario() after(60);
     }
 
     msgsrv breakWindow() {
