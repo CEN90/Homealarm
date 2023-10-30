@@ -25,9 +25,11 @@ property {
         	&& controller.alarm
         ); 
         
-        a = controller.alarm && !(controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen));
+        a = controller.alarm && !controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen);
         
-        b= !controller.alarm && (controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen));
+        b = !controller.alarm && controller.armed && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen);
+        
+       
     }
 
     Assertion {
@@ -39,7 +41,7 @@ property {
         // safety_prop1: one; 
         //safety_prop2: oneSens; 
         //safety_prop3: (!controller.armed && !controller.alarm && !w_sensor.isOpen); 
-         safety_prop1: a || b;
+         safety_prop1: !a || !b;
 
         
     }

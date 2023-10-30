@@ -69,6 +69,7 @@ reactiveclass Controller(10) {
 
         //panic!!!!!!!!!!!! *kermit flapping with his arms*
         if (armed && (window_open || door_open)) {
+        	//alarm = true;
             self.turnOnAlarm();
         }
     }
@@ -105,17 +106,17 @@ reactiveclass Sensor(5) {
     }
 
     msgsrv opened() {
-        // isOpen = true;
+        isOpen = true;
         // self.notifyController();
         controller.setSensorState(sensor_id, true);
-        self.setState(true) after(1);
+        //self.setState(true); // after(1);
     }
 
     msgsrv closed() {
-        // isOpen = false;
+        isOpen = false;
         // self.notifyController();
+        //self.setState(false);
         controller.setSensorState(sensor_id, false);
-        self.setState(false) after(1);
     }
 
     msgsrv setState(boolean state) {
