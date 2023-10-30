@@ -162,7 +162,7 @@ reactiveclass Authentication(10) {
     }
 
     msgsrv checkCode(int code) {   
-        if (auth_key) {
+        if (auth_key && code == valid_code) {
 	        controller.authenticatedUser();	   
             auth_key = false;
             attempts = 0;   
@@ -200,11 +200,13 @@ reactiveclass User(5) {
     }
     statevars {
         int _key, _code;
+        int attempts;
     }
 
     User(int key, int code) {
         _key = key;
         _code = code;
+        attempts = 0;
 
         self.scenario(); // after(10);
     }
@@ -215,7 +217,11 @@ reactiveclass User(5) {
     	//delay(50);
     	//self.breakWindow(); // after(45); 
     	
-    	self.scenario() after(60);
+    	//if (attempts < 5) {
+			self.scenario() after(60);    		
+    	//}
+
+    	//attempts += 1;
     }
 
     msgsrv breakWindow() {
@@ -233,7 +239,8 @@ reactiveclass User(5) {
     msgsrv pokesLock() {
         authentication.checkKey(user_key);
         delay(user_time_before_code);
-        authentication.checkCode(user_code) after(user_time_before_code);
+        authentication.checkCode(user_code);
+        //authentication.checkCode(?(13, user_code)); // after(user_time_before_code); 
     }
 }
 

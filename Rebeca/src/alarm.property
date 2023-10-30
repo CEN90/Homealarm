@@ -8,8 +8,6 @@ property {
         b = !controller.alarm 
         	&& controller.armed 
         	&& (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen);
-        
-        
     }
 
     Assertion {
