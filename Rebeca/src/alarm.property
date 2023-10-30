@@ -1,5 +1,4 @@
 property {
-
     define {      
         a = controller.alarm 
         	&& !controller.armed 
@@ -12,5 +11,6 @@ property {
 
     Assertion {
          safety_prop1: !a || !b;
+         safety_prop2: !(a && b);
     }
 }
