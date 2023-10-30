@@ -63,3 +63,5 @@ LF/lib64/*
 *.txt
 
 CMakeLists.txt
+
+ticket.*

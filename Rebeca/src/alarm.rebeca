@@ -36,14 +36,13 @@ reactiveclass Controller(10) {
 
     msgsrv authenticatedUser() {
         if (!armed) {
-            if (door_open || window_open){
-                //notify error, you work now, faster
-            }
-            
-            self.setArmed();
-        
+            //if (!door_open && !window_open){
+            armed = true;
+    		door.setDoorlocked();
+            //} 
         } else {
-            self.setUnarmed();
+            armed = false;
+        	door.setDoorUnlocked();
         }
     }
     
@@ -51,7 +50,6 @@ reactiveclass Controller(10) {
     	armed = true;
         door.setDoorlocked();
     }
-    
     
     msgsrv setUnarmed() {
     	armed = false;
@@ -69,7 +67,6 @@ reactiveclass Controller(10) {
 
         //panic!!!!!!!!!!!! *kermit flapping with his arms*
         if (armed && (window_open || door_open)) {
-        	//alarm = true;
             self.turnOnAlarm();
         }
     }
@@ -107,29 +104,13 @@ reactiveclass Sensor(5) {
 
     msgsrv opened() {
         isOpen = true;
-        // self.notifyController();
         controller.setSensorState(sensor_id, true);
-        //self.setState(true); // after(1);
     }
 
     msgsrv closed() {
         isOpen = false;
-        // self.notifyController();
-        //self.setState(false);
         controller.setSensorState(sensor_id, false);
     }
-
-    msgsrv setState(boolean state) {
-        isOpen = state;
-    }
-
-    // msgsrv notifyController() {
-    //     controller.setSensorState(sensor_id, isOpen);
-    // }
-
-    // msgsrv reset() {
-    //     isOpen = false;
-    // }
 }
 
 reactiveclass MotionSensor(5) {
@@ -171,7 +152,6 @@ reactiveclass Authentication(10) {
     }
 
     msgsrv checkKey(int key) {
-        // delay(5);
 		attempts += 1;
 
         if (key == valid_key && attempts < allowed_attempts) {
@@ -183,33 +163,11 @@ reactiveclass Authentication(10) {
 
     msgsrv checkCode(int code) {   
         if (auth_key) {
-	        controller.authenticatedUser();	        
-	        self.resetAttempts();
-        }
-    }
-    
-    msgsrv resetAttempts() {
-    	auth_key = false;
-        attempts = 0;
-    }
-	
-    msgsrv authenticate(int code) {
-        attempts += 1;
-
-        if (attempts > allowed_attempts) {
+	        controller.authenticatedUser();	   
             auth_key = false;
+            attempts = 0;   
         }
-
-        if (auth_key) {
-            if (code == valid_code) {
-                controller.authenticatedUser();
-                auth_key = false;
-                attempts = 0;
-            } 
-        }
-
     }
-    
 }
 
 reactiveclass Door(5) {
@@ -224,12 +182,12 @@ reactiveclass Door(5) {
     }
 
     msgsrv setDoorlocked () {
-        delay(25);
+        delay(5);
         isLocked = true;
     }
     
     msgsrv setDoorUnlocked () {
-        delay(25);
+        delay(5);
         isLocked = false;
     }
 }
@@ -248,12 +206,14 @@ reactiveclass User(5) {
         _key = key;
         _code = code;
 
-        self.scenario() after(10);
+        self.scenario(); // after(10);
     }
 
     msgsrv scenario() {
-    	self.pokesLock() after(15);  // locks the door
-    	self.breakWindow() after(25); 
+        delay(25);
+    	self.pokesLock(); // after(15);  // locks the door
+    	//delay(50);
+    	//self.breakWindow(); // after(45); 
     }
 
     msgsrv breakWindow() {
@@ -269,10 +229,8 @@ reactiveclass User(5) {
     } 
 
     msgsrv pokesLock() {
-        // scanna bricka
-        // skriv in kod
-
         authentication.checkKey(user_key);
+        delay(user_time_before_code);
         authentication.checkCode(user_code) after(user_time_before_code);
     }
 }
