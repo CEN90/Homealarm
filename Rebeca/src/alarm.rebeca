@@ -1,10 +1,13 @@
+// Sensor id
 env int doorSensor_id = 1;
 env int windowSensor_id = 2;
 
+// User auth
 env int user_key = 3;
 env int user_code = 4;
 env int allowed_attempts = 5;
 
+// Delay times
 env int user_time_before_code = 2;
 env int user_time_entering_code = 3;
 
@@ -34,6 +37,24 @@ reactiveclass Controller(10) {
         door_locked = false;
     }
 
+    void setArmed() {
+    	armed = true;
+        door.setDoorlocked();
+    }
+    
+    void setUnarmed() {
+    	armed = false;
+        door.setDoorUnlocked();
+    }
+
+    void turnOnAlarm() {
+        alarm = true; 
+    }
+    
+    void turnOffAlarm() {
+        alarm = false; 
+    }
+
     msgsrv authenticatedUser() {
         if (!armed) {
             //if (!door_open && !window_open){
@@ -44,16 +65,6 @@ reactiveclass Controller(10) {
             armed = false;
         	door.setDoorUnlocked();
         }
-    }
-    
-    msgsrv setArmed() {
-    	armed = true;
-        door.setDoorlocked();
-    }
-    
-    msgsrv setUnarmed() {
-    	armed = false;
-        door.setDoorUnlocked();
     }
 
     msgsrv setSensorState(int sensor, boolean state){
@@ -71,19 +82,11 @@ reactiveclass Controller(10) {
         }
     }
 
-    msgsrv detectMotion() {
+    msgsrv motionsensorTriggered() {
         if (armed) {
             self.turnOnAlarm();
             motion_triggered = true; 
         }
-    }
-    
-    msgsrv turnOnAlarm() {
-        alarm = true; 
-    }
-    
-    msgsrv turnOffAlarm() {
-        alarm = false; 
     }
 }
 
@@ -124,7 +127,7 @@ reactiveclass MotionSensor(5) {
 
     msgsrv setTriggered() {
         isTriggered = true;
-        controller.detectMotion();
+        controller.motionsensorTriggered();
     }
 
     msgsrv reset() {
@@ -172,18 +175,40 @@ reactiveclass Authentication(10) {
 
 reactiveclass Door(5) {
     knownrebecs {
-        Controller controller;
+        Sensor d_sensor;
     }
+
     statevars {
-         boolean isLocked;
+        boolean isLocked;
+        boolean isOpen;
     }
+
     Door() {
         isLocked = false;
+        isOpen = false;
+    }
+
+    msgsrv setDoorOpen() {
+        if (!isLocked && !isOpen) {
+            delay(5);
+            d_sensor.opened();
+            isOpen = true;
+        }
+    }
+
+    msgsrv setDoorClosed() {
+        if (isOpen) {
+            delay(5);
+            d_sensor.closed();
+            isOpen = false;
+        }
     }
 
     msgsrv setDoorlocked () {
-        delay(5);
-        isLocked = true;
+        if (isOpen) {
+            delay(5);
+            isLocked = true;
+        }
     }
     
     msgsrv setDoorUnlocked () {
@@ -197,6 +222,7 @@ reactiveclass User(5) {
         Sensor window_sensor, door_sensor;
         MotionSensor motion_sensor; 
         Authentication authentication;
+        Door door;
     }
     statevars {
         int _key, _code;
@@ -208,22 +234,31 @@ reactiveclass User(5) {
         _code = code;
         attempts = 0;
 
-        self.scenario(); // after(10);
+        self.scenario();
     }
 
     msgsrv scenario() {
-        delay(25);
-    	self.pokesLock(); // after(15);  // locks the door
-    	//delay(50);
-    	//self.breakWindow(); // after(45); 
+        delay(120);
+
+    	// self.pokesLock();  // locks the door
+        authentication.checkKey(user_key);
+        delay(user_time_before_code);
+        authentication.checkCode(user_code);
     	
-    	//if (attempts < 5) {
-			self.scenario() after(60);    		
-    	//}
+    	delay(60); // Buying milk
 
-    	//attempts += 1;
+        // self.pokesLock(); // Back from ICA
+        authentication.checkKey(user_key);
+        delay(user_time_before_code);
+        authentication.checkCode(user_code);
+
+        door.setDoorOpen();
+        delay(10); // walks through
+        door.setDoorClosed();
+        
+        self.scenario(); // Goes to sleep   		
     }
-
+    
     msgsrv breakWindow() {
         window_sensor.opened();
     }
@@ -240,7 +275,7 @@ reactiveclass User(5) {
         authentication.checkKey(user_key);
         delay(user_time_before_code);
         authentication.checkCode(user_code);
-        //authentication.checkCode(?(13, user_code)); // after(user_time_before_code); 
+        // authentication.checkCode(?(13, user_code));
     }
 }
 
@@ -250,7 +285,7 @@ main {
     Sensor d_sensor(controller):(doorSensor_id);
     MotionSensor m_sensor(controller):();
     Authentication authentication(controller):(user_key, user_code);
-    Door door(controller): ();
+    Door door(d_sensor): ();
 
-    User user(w_sensor, d_sensor, m_sensor, authentication):(user_key, user_code);
+    User user(w_sensor, d_sensor, m_sensor, authentication, door):(user_key, user_code);
 }
