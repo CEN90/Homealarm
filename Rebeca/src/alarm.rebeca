@@ -138,6 +138,7 @@ reactiveclass MotionSensor(5) {
 reactiveclass Authentication(10) {
     knownrebecs{
         Controller controller;
+        User idiot;
     }
 
     statevars {
@@ -159,6 +160,7 @@ reactiveclass Authentication(10) {
 
         if (key == valid_key && attempts < allowed_attempts) {
             auth_key = true; 
+            idiot.keyChecked();
         } else {
             auth_key = false;
         }
@@ -166,7 +168,8 @@ reactiveclass Authentication(10) {
 
     msgsrv checkCode(int code) {   
         if (auth_key && code == valid_code) {
-	        controller.authenticatedUser();	   
+	        // controller.authenticatedUser();	   
+            idiot.codeChecked() after(5);
             auth_key = false;
             attempts = 0;   
         }
@@ -176,6 +179,7 @@ reactiveclass Authentication(10) {
 reactiveclass Door(5) {
     knownrebecs {
         Sensor d_sensor;
+        User idiot;
     }
 
     statevars {
@@ -191,16 +195,18 @@ reactiveclass Door(5) {
     msgsrv setDoorOpen() {
         if (!isLocked && !isOpen) {
             delay(5);
-            d_sensor.opened();
+            // d_sensor.opened();
             isOpen = true;
+            idiot.doorOpened();
         }
     }
 
     msgsrv setDoorClosed() {
         if (isOpen) {
             delay(5);
-            d_sensor.closed();
+            // d_sensor.closed();
             isOpen = false;
+            idiot.doorClosed();
         }
     }
 
@@ -236,27 +242,34 @@ reactiveclass User(5) {
 
         self.scenario();
     }
+    
+    msgsrv idle() {
+    	delay(5);
+    	self.idle();
+    }
+
+    msgsrv codeChecked() {
+        door.setDoorOpen();
+    }
+
+    msgsrv doorOpened() {
+        //delay(5);
+        door.setDoorClosed();
+    }
+
+    msgsrv doorClosed() {
+        //delay(5);
+        door.setDoorOpen();
+    }
+    
+    msgsrv keyChecked() {
+        delay(5);
+        authentication.checkCode(user_code);    	
+    }
 
     msgsrv scenario() {
-        delay(120);
-
-    	// self.pokesLock();  // locks the door
-        authentication.checkKey(user_key);
-        delay(user_time_before_code);
-        authentication.checkCode(user_code);
-    	
-    	delay(60); // Buying milk
-
-        // self.pokesLock(); // Back from ICA
-        authentication.checkKey(user_key);
-        delay(user_time_before_code);
-        authentication.checkCode(user_code);
-
-        door.setDoorOpen();
-        delay(10); // walks through
-        door.setDoorClosed();
-        
-        self.scenario(); // Goes to sleep   		
+        door.setDoorOpen() after(5);	
+        // self.idle();
     }
     
     msgsrv breakWindow() {
@@ -275,7 +288,6 @@ reactiveclass User(5) {
         authentication.checkKey(user_key);
         delay(user_time_before_code);
         authentication.checkCode(user_code);
-        // authentication.checkCode(?(13, user_code));
     }
 }
 
@@ -284,8 +296,8 @@ main {
     Sensor w_sensor(controller):(windowSensor_id);
     Sensor d_sensor(controller):(doorSensor_id);
     MotionSensor m_sensor(controller):();
-    Authentication authentication(controller):(user_key, user_code);
-    Door door(d_sensor): ();
+    Authentication authentication(controller, user):(user_key, user_code);
+    Door door(d_sensor, user): ();
 
     User user(w_sensor, d_sensor, m_sensor, authentication, door):(user_key, user_code);
 }
