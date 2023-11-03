@@ -225,6 +225,7 @@ reactiveclass Door(5) {
         }
     }
 
+    // Uppdatera så dörr inte går att låsa om öppen!
     msgsrv setDoorLockStatus(boolean status) {
         isLocked = status;
         idiot.scenario();
