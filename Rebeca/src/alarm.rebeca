@@ -16,7 +16,10 @@ env int IDLE = 0;
 env int SCANKEY = 1;
 env int OPENDOOR = 2;
 env int BREAKWINDOW = 3;
-
+env int BREAKDANCE = 4;
+env int BREAKDOOR = 5;
+env int SLEEP = 6;
+env int SCRIPT_SIZE = 6;
 
 reactiveclass Controller(10) {
     knownrebecs { 
@@ -55,7 +58,7 @@ reactiveclass Controller(10) {
 
     msgsrv turnOnAlarm() {
         alarm = true; 
-        user.scenario(IDLE);
+        user.scenario();
     }
     
     void turnOffAlarm() {
@@ -224,7 +227,7 @@ reactiveclass Door(5) {
 
     msgsrv setDoorLockStatus(boolean status) {
         isLocked = status;
-        idiot.scenario(BREAKWINDOW);
+        idiot.scenario();
     }
     
     msgsrv setDoorUnlocked() {
@@ -243,14 +246,27 @@ reactiveclass User(5) {
     statevars {
         int _key, _code;
         int attempts;
+        int [7] script;
+        int script_location;
     }
 
     User(int key, int code) {
         _key = key;
         _code = code;
         attempts = 0;
+        script_location = -1;
 
-        self.scenario(SCANKEY);
+        self.setScript();
+        self.scenario();
+    }
+
+    void setScript() {
+        script[0] = SCANKEY;
+        script[1] = SLEEP;
+        script[2] = SCANKEY;
+        script[3] = SLEEP;
+        script[4] = SCANKEY;
+        script[5] = BREAKWINDOW;
     }
     
     msgsrv idle() {
@@ -278,36 +294,42 @@ reactiveclass User(5) {
         }
     }
 
-    msgsrv scenario(int mode_selector) {
-        if (mode_selector == IDLE) {
+    msgsrv scenario() {
+        script_location += 1;
+
+        if (script_location == SCRIPT_SIZE) {
             self.idle();
         }
 
-        if (mode_selector == SCANKEY) {
+        if (script[script_location] == IDLE) {
+            self.idle();
+        }
+
+        if (script[script_location] == SCANKEY) {
             self.keyChecked(false) after(5);
         }
 
-        if (mode_selector == OPENDOOR) {
+        if (script[script_location] == OPENDOOR) {
             door.setDoorOpen() after(5);	
         }
 
-        if (mode_selector == BREAKWINDOW) {
-            self.breakWindow() after(5);	
+        if (script[script_location] == BREAKWINDOW) {
+            window_sensor.opened();
+        }
+
+        if (script[script_location] == BREAKDANCE) {
+            motion_sensor.setTriggered();
+        }
+
+        if (script[script_location] == BREAKDOOR) {
+            door_sensor.opened();
+        }
+
+        if (script[script_location] == SLEEP) {
+            self.scenario() after(30);
         }
     }
     
-    msgsrv breakWindow() {
-        window_sensor.opened();
-    }
-
-    msgsrv breakDoor() {
-        door_sensor.opened();
-    }   
-
-    msgsrv breakDances() {
-        motion_sensor.setTriggered();
-    } 
-
     msgsrv pokesLock() {
         authentication.checkKey(user_key);
         delay(user_time_before_code);
