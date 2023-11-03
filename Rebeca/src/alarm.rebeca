@@ -15,6 +15,8 @@ env int user_time_entering_code = 3;
 env int IDLE = 0;
 env int SCANKEY = 1;
 env int OPENDOOR = 2;
+env int BREAKWINDOW = 3;
+
 
 reactiveclass Controller(10) {
     knownrebecs { 
@@ -22,6 +24,7 @@ reactiveclass Controller(10) {
         MotionSensor motion;
         Authentication authentication;
         Door door;
+        User user;
     }
 
     statevars {
@@ -52,6 +55,7 @@ reactiveclass Controller(10) {
 
     msgsrv turnOnAlarm() {
         alarm = true; 
+        user.scenario(IDLE);
     }
     
     void turnOffAlarm() {
@@ -220,7 +224,7 @@ reactiveclass Door(5) {
 
     msgsrv setDoorLockStatus(boolean status) {
         isLocked = status;
-        idiot.scenario(IDLE);
+        idiot.scenario(BREAKWINDOW);
     }
     
     msgsrv setDoorUnlocked() {
@@ -286,6 +290,10 @@ reactiveclass User(5) {
         if (mode_selector == OPENDOOR) {
             door.setDoorOpen() after(5);	
         }
+
+        if (mode_selector == BREAKWINDOW) {
+            self.breakWindow() after(5);	
+        }
     }
     
     msgsrv breakWindow() {
@@ -308,7 +316,7 @@ reactiveclass User(5) {
 }
 
 main {
-    Controller controller(w_sensor, d_sensor, m_sensor, authentication, door):();
+    Controller controller(w_sensor, d_sensor, m_sensor, authentication, door, user):();
     Sensor w_sensor(controller):(windowSensor_id);
     Sensor d_sensor(controller):(doorSensor_id);
     MotionSensor m_sensor(controller):();
