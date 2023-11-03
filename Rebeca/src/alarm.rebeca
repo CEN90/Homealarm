@@ -24,7 +24,6 @@ reactiveclass Controller(10) {
         boolean door_open;
         boolean window_open;
         boolean alarm; 
-        boolean motion_triggered; 
         boolean door_locked;
     }
     
@@ -33,7 +32,6 @@ reactiveclass Controller(10) {
         door_open = false;
         window_open = false;
         alarm = false; 
-        motion_triggered = false; 
         door_locked = false;
     }
 
@@ -47,7 +45,7 @@ reactiveclass Controller(10) {
         door.setDoorUnlocked();
     }
 
-    void turnOnAlarm() {
+    msgsrv turnOnAlarm() {
         alarm = true; 
     }
     
@@ -56,15 +54,17 @@ reactiveclass Controller(10) {
     }
 
     msgsrv authenticatedUser() {
-        if (!armed) {
-            //if (!door_open && !window_open){
-            armed = true;
-    		door.setDoorlocked();
-            //} 
-        } else {
+        if (armed) {
             armed = false;
         	door.setDoorUnlocked();
+        } else {
+            armed = true;
+            door.setDoorlocked();
         }
+    }
+
+    msgsrv updateDoorLock(boolean status) {
+        door_locked = status;
     }
 
     msgsrv setSensorState(int sensor, boolean state){
@@ -85,7 +85,6 @@ reactiveclass Controller(10) {
     msgsrv motionsensorTriggered() {
         if (armed) {
             self.turnOnAlarm();
-            motion_triggered = true; 
         }
     }
 }
@@ -194,19 +193,17 @@ reactiveclass Door(5) {
 
     msgsrv setDoorOpen() {
         if (!isLocked && !isOpen) {
-            delay(5);
-            // d_sensor.opened();
             isOpen = true;
-            idiot.doorOpened();
+            d_sensor.opened() after(5);
+            idiot.doorOpened() after(5);
         }
     }
 
     msgsrv setDoorClosed() {
         if (isOpen) {
-            delay(5);
-            // d_sensor.closed();
             isOpen = false;
-            idiot.doorClosed();
+            d_sensor.closed() after(5);
+            idiot.doorClosed() after(5);
         }
     }
 
@@ -244,8 +241,7 @@ reactiveclass User(5) {
     }
     
     msgsrv idle() {
-    	delay(5);
-    	self.idle();
+    	self.idle() after(5);
     }
 
     msgsrv codeChecked() {
@@ -253,13 +249,11 @@ reactiveclass User(5) {
     }
 
     msgsrv doorOpened() {
-        //delay(5);
-        door.setDoorClosed();
+        door.setDoorClosed() after(5);
     }
 
     msgsrv doorClosed() {
-        //delay(5);
-        door.setDoorOpen();
+        door.setDoorOpen() after(5);
     }
     
     msgsrv keyChecked() {
