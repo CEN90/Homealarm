@@ -258,7 +258,7 @@ reactiveclass User(5) {
         script_location = -1;
 
         self.setScript();
-        self.scenario();
+        self.scenario() after(5);
     }
 
     void setScript() {
@@ -275,7 +275,8 @@ reactiveclass User(5) {
     }
 
     msgsrv codeChecked() {
-        door.setDoorOpen();
+        // door.setDoorOpen();
+        self.scenario();
     }
 
     msgsrv doorOpened() {
@@ -295,39 +296,90 @@ reactiveclass User(5) {
         }
     }
 
+    // msgsrv scenario() {
+    //     script_location += 1;
+
+    //     int imsorandom = ?(
+    //         SCANKEY,
+    //         OPENDOOR,
+    //         BREAKWINDOW,
+    //         BREAKDANCE,
+    //         BREAKDOOR
+    //         );
+
+    //     if (script_location == SCRIPT_SIZE) {
+    //         self.idle();
+    //     }
+
+    //     if (imsorandom == IDLE) {
+    //         self.idle();
+    //     }
+
+    //     if (imsorandom == SCANKEY) {
+    //         self.keyChecked(false) after(5);
+    //     }
+
+    //     if (imsorandom == OPENDOOR) {
+    //         door.setDoorOpen() after(5);	
+    //     }
+
+    //     if (imsorandom == BREAKWINDOW) {
+    //         window_sensor.opened();
+    //     }
+
+    //     if (imsorandom == BREAKDANCE) {
+    //         motion_sensor.setTriggered();
+    //     }
+
+    //     if (imsorandom == BREAKDOOR) {
+    //         door_sensor.opened();
+    //     }
+
+    //     if (imsorandom == SLEEP) {
+    //         self.scenario() after(30);
+    //     }
+
+    //     self.scenario() after(100);
+    // }
+
     msgsrv scenario() {
         script_location += 1;
 
-        if (script_location == SCRIPT_SIZE) {
+        if (script_location >= SCRIPT_SIZE) {
             self.idle();
-        }
+        } else {
+            switch(script[script_location]) {
+                case 0: // IDLE
+                    self.idle();
+                    break;
+                
+                case 1: // SCANKEY
+                    self.keyChecked(false) after(5);
+                    break;
+                
+                case 2: // OPENDOOR
+                    door.setDoorOpen() after(5);
+                    break;
+                
+                case 3: // BREAKWINDOW
+                    window_sensor.opened();
+                    break;
+                
+                case 4: // BREAKDANCE
+                    motion_sensor.setTriggered();
+                    break;
+                
+                case 5: // BREAKDOOR
+                    door_sensor.opened();
+                    break;
+                
+                case 6: // SLEEP
+                    self.scenario() after(30);
+                    break;
 
-        if (script[script_location] == IDLE) {
-            self.idle();
-        }
-
-        if (script[script_location] == SCANKEY) {
-            self.keyChecked(false) after(5);
-        }
-
-        if (script[script_location] == OPENDOOR) {
-            door.setDoorOpen() after(5);	
-        }
-
-        if (script[script_location] == BREAKWINDOW) {
-            window_sensor.opened();
-        }
-
-        if (script[script_location] == BREAKDANCE) {
-            motion_sensor.setTriggered();
-        }
-
-        if (script[script_location] == BREAKDOOR) {
-            door_sensor.opened();
-        }
-
-        if (script[script_location] == SLEEP) {
-            self.scenario() after(30);
+                default:
+                    self.idle();
+            }
         }
     }
 }
