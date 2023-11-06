@@ -11,7 +11,7 @@ env int allowed_attempts = 5;
 env int user_time_before_code = 2;
 env int user_time_entering_code = 3;
 
-// Proper responses for user
+// Actions for scenario
 env int IDLE = 0;
 env int SCANKEY = 1;
 env int OPENDOOR = 2;
@@ -83,7 +83,7 @@ reactiveclass Controller(10) {
             door_open = state; 
         }
 
-        //panic!!!!!!!!!!!! *kermit flapping with his arms*
+        //panic!!!! *kermit flapping with his arms*
         if (armed && (window_open || door_open)) {
             self.turnOnAlarm();
         }
@@ -225,7 +225,7 @@ reactiveclass Door(5) {
         }
     }
 
-    // Uppdatera så dörr inte går att låsa om öppen!
+    // Update so door can't be locked if open!
     msgsrv setDoorLockStatus(boolean status) {
         isLocked = status;
         idiot.scenario();
