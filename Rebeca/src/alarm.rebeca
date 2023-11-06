@@ -330,12 +330,6 @@ reactiveclass User(5) {
             self.scenario() after(30);
         }
     }
-    
-    msgsrv pokesLock() {
-        authentication.checkKey(user_key);
-        delay(user_time_before_code);
-        authentication.checkCode(user_code);
-    }
 }
 
 main {
