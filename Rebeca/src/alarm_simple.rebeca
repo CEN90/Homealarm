@@ -177,7 +177,8 @@ reactiveclass User(5) {
         key = k;
         code = c;
 
-        self.enterKey() after(USER_DELAY);
+        // self.loop() after(USER_DELAY);
+        self.enterKey() after(USER_DELAY); // works
         // self.openDoor() after(USER_DELAY * 2);
     }
 
@@ -198,7 +199,7 @@ reactiveclass User(5) {
             authenticated = !authenticated;
         }
 
-        self.openDoor() after(USER_DELAY);
+        // self.openDoor() after(USER_DELAY);
     }
 
     msgsrv openDoor() {
@@ -214,6 +215,31 @@ reactiveclass User(5) {
             door.closeDoor() after(USER_DELAY);
         }
     }
+
+
+    msgsrv loop() {
+        // send open door
+        // send close door
+        // send auth
+        // goto top
+
+        // send open door
+        door.openDoor();
+        // delay(USER_DELAY);
+        
+        // send close door
+        door.closeDoor();
+        // delay(USER_DELAY);
+
+        self.enterKey();
+        // delay(USER_DELAY);
+
+        self.loop() after(USER_DELAY * 10);
+    }
+
+
+
+
 }
 
 main {
