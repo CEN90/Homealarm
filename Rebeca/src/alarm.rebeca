@@ -5,7 +5,7 @@ env int windowSensor_id = 2;
 // User auth
 env int user_key = 3;
 env int user_code = 4;
-env int allowed_attempts = 5;
+env int allowed_attempts = 3;
 
 // Delay times
 env int user_time_before_code = 2;
@@ -19,6 +19,7 @@ env int BREAKWINDOW = 3;
 env int BREAKDANCE = 4;
 env int BREAKDOOR = 5;
 env int SLEEP = 6;
+
 env int SCRIPT_SIZE = 6;
 
 reactiveclass Controller(10) {
@@ -58,7 +59,7 @@ reactiveclass Controller(10) {
 
     msgsrv turnOnAlarm() {
         alarm = true; 
-        user.scenario();
+        // user.scenario();
     }
     
     void turnOffAlarm() {
@@ -92,7 +93,10 @@ reactiveclass Controller(10) {
     msgsrv motionsensorTriggered() {
         if (armed) {
             self.turnOnAlarm();
-        }
+        } 
+        // else {
+        //     user.scenario();
+        // }
     }
 }
 
@@ -182,6 +186,8 @@ reactiveclass Authentication(10) {
     msgsrv checkCode(int code) {   
         if (auth_key && code == valid_code) {
 	        controller.authenticatedUser();	   
+        } else {
+            idiot.keyChecked(false);
         }
     }
 }
@@ -200,6 +206,20 @@ reactiveclass Door(5) {
     Door() {
         isLocked = false;
         isOpen = false;
+    }
+
+    msgsrv openDoor() {
+        if (!isLocked && !isOpen) {
+            isOpen = true;
+            d_sensor.opened() after(5);
+        }
+    }
+
+    msgsrv closeDoor() {
+        if (isOpen) {
+            isOpen = false;
+            d_sensor.closed() after(5);
+        }
     }
 
     msgsrv setDoorOpen() {
@@ -228,16 +248,16 @@ reactiveclass Door(5) {
     // Update so door can't be locked if open!
     msgsrv setDoorLockStatus(boolean status) {
         isLocked = status;
-        idiot.scenario();
+        // idiot.scenario();
     }
     
     msgsrv setDoorUnlocked() {
-        delay(5);
+        // delay(5);
         isLocked = false;
     }
 }
 
-reactiveclass User(5) {
+reactiveclass User(10) {
     knownrebecs { 
         Sensor window_sensor, door_sensor;
         MotionSensor motion_sensor; 
@@ -249,6 +269,7 @@ reactiveclass User(5) {
         int attempts;
         int [7] script;
         int script_location;
+        boolean isDoorOpen, compr;
     }
 
     User(int key, int code) {
@@ -256,131 +277,130 @@ reactiveclass User(5) {
         _code = code;
         attempts = 0;
         script_location = -1;
+        isDoorOpen = false;
+        compr = false;
 
-        self.setScript();
+        // self.setScript();
         self.scenario() after(5);
     }
 
-    void setScript() {
+    msgsrv setScript() {
         script[0] = SCANKEY;
         script[1] = SLEEP;
         script[2] = SCANKEY;
         script[3] = SLEEP;
         script[4] = SCANKEY;
-        script[5] = BREAKWINDOW;
+        script[5] = BREAKDANCE;
+        self.scenario();
     }
     
     msgsrv idle() {
-    	self.idle() after(5);
+    	self.idle() after(50);
     }
 
     msgsrv codeChecked() {
         // door.setDoorOpen();
-        self.scenario();
+        self.scenario() after(5);
     }
 
     msgsrv doorOpened() {
+        isDoorOpen = true;
+        // self.scenario();
         door.setDoorClosed() after(5);
     }
 
     msgsrv doorClosed() {
+        isDoorOpen = false;
+        // self.scenario();
         door.setDoorOpen() after(5);
     }
     
     // If attacked should probably be something here
     msgsrv keyChecked(boolean valid) {
-        if (valid) {
-            authentication.checkCode(user_code) after(5);    	
+        int key = compr ? ?(user_key, 1) : user_key;
+        int code = compr ? ?(user_code, 1) : user_code;
+
+        if (attempts < allowed_attempts) {
+            if (valid) {
+                authentication.checkCode(user_code) after(5);    	
+            } else {
+                authentication.checkKey(user_key) after(5);
+            }
         } else {
-            authentication.checkKey(user_key) after(5);
+            self.idle();
         }
+
+        attempts += 1;
     }
 
-    // msgsrv scenario() {
-    //     script_location += 1;
-
-    //     int imsorandom = ?(
-    //         SCANKEY,
-    //         OPENDOOR,
-    //         BREAKWINDOW,
-    //         BREAKDANCE,
-    //         BREAKDOOR
-    //         );
-
-    //     if (script_location == SCRIPT_SIZE) {
-    //         self.idle();
-    //     }
-
-    //     if (imsorandom == IDLE) {
-    //         self.idle();
-    //     }
-
-    //     if (imsorandom == SCANKEY) {
-    //         self.keyChecked(false) after(5);
-    //     }
-
-    //     if (imsorandom == OPENDOOR) {
-    //         door.setDoorOpen() after(5);	
-    //     }
-
-    //     if (imsorandom == BREAKWINDOW) {
-    //         window_sensor.opened();
-    //     }
-
-    //     if (imsorandom == BREAKDANCE) {
-    //         motion_sensor.setTriggered();
-    //     }
-
-    //     if (imsorandom == BREAKDOOR) {
-    //         door_sensor.opened();
-    //     }
-
-    //     if (imsorandom == SLEEP) {
-    //         self.scenario() after(30);
-    //     }
-
-    //     self.scenario() after(100);
-    // }
-
     msgsrv scenario() {
+        self.keyChecked(false);
+        door.openDoor() after(5);
+        door_sensor.opened() after(5);
+        window_sensor.opened() after(5);
+        door.closeDoor() after(5);
+        
+        // self.scenario() after(2500);
+        self.idle() after(2500);
+    }
+
+    msgsrv scenario2() {
         script_location += 1;
+        int randy = 0;
+        int randy_action = ?(1, 2, 4);
 
-        if (script_location >= SCRIPT_SIZE) {
-            self.idle();
-        } else {
-            switch(script[script_location]) {
-                case 0: // IDLE
-                    self.idle();
-                    break;
-                
-                case 1: // SCANKEY
-                    self.keyChecked(false) after(5);
-                    break;
-                
-                case 2: // OPENDOOR
-                    door.setDoorOpen() after(5);
-                    break;
-                
-                case 3: // BREAKWINDOW
-                    window_sensor.opened();
-                    break;
-                
-                case 4: // BREAKDANCE
-                    motion_sensor.setTriggered();
-                    break;
-                
-                case 5: // BREAKDOOR
-                    door_sensor.opened();
-                    break;
-                
-                case 6: // SLEEP
-                    self.scenario() after(30);
-                    break;
+        if (script_location < SCRIPT_SIZE) {
 
-                default:
-                    self.idle();
+            if (isDoorOpen) {
+                door.setDoorClosed() after(5);
+            } else {
+                door.setDoorOpen() after(5);
             }
+
+        //     self.idle();
+        // } else {
+            // switch(randy_action) {
+            //     // case 0: // IDLE
+            //     //     self.idle();
+            //     //     break;
+                
+            //     case 1: // SCANKEY
+            //         self.keyChecked(false) after(5);
+            //         break;
+                
+            //     case 2: // OPENDOOR
+            //         if (isDoorOpen) {
+            //             door.setDoorClosed() after(5);
+            //         } else {
+            //             door.setDoorOpen() after(5);
+            //         }
+            //         break;
+                
+            //     // case 3: // BREAKWINDOW
+            //     //     window_sensor.opened();
+            //     //     break;
+                
+            //     case 4: // BREAKDANCE
+            //         // randy = ?(1, 3);
+            //         // if (randy == 1) { motion_sensor.setTriggered(); }
+            //         // if (randy == 3) { window_sensor.opened(); }
+            //         window_sensor.opened();
+            //         break;
+                
+            //     // case 5: // BREAKDOOR
+            //     //     door_sensor.opened();
+            //     //     break;
+                
+            //     // case 6: // SLEEP
+            //     //     self.scenario() after(30);
+            //     //     break;
+
+            //     default:
+            //         self.idle();
+            // }
         }
+        
+        self.scenario() after(5);
     }
 }
 
