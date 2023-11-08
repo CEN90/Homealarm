@@ -198,8 +198,7 @@ reactiveclass User(5) {
             authenticated = !authenticated;
         }
 
-        // self.enterKey() after(USER_DELAY);
-        // self.openDoor() after(USER_DELAY);
+        self.openDoor() after(USER_DELAY);
     }
 
     msgsrv openDoor() {
@@ -214,8 +213,6 @@ reactiveclass User(5) {
         if (authenticated) {
             door.closeDoor() after(USER_DELAY);
         }
-
-        self.openDoor() after(USER_DELAY);
     }
 }
 
@@ -223,6 +220,6 @@ main {
     Authentication authentication(controller, user):(user_key, user_door);
     User user(authentication, door): (user_key, user_door);
     Controller controller(authentication, door):();
-    BadActor steven_seagull(door): ();
+    BadActor steven_seagal(door): ();
     Door door(controller):();
 }
