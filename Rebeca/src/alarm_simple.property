@@ -1,0 +1,16 @@
+property {
+    define {      
+        a = controller.alarm; 
+        	// && !controller.armed 
+        	// && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen);
+        
+        b = !controller.alarm; 
+        	// && controller.armed 
+        	// && (m_sensor.isTriggered || w_sensor.isOpen || d_sensor.isOpen);
+    }
+
+    Assertion {
+        //  safety_prop1: !a || !b;
+        //  safety_prop2: !(a && b);
+    }
+}

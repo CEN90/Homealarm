@@ -1,0 +1,30 @@
+digraph html {
+S1_0[label="S1_0: \n b"];
+S2_0[label="S2_0: \n b"];
+S1_0 -> S2_0[label="time +=10 \n @0", style="bold", color="red"];
+S3_0[label="S3_0: \n b"];
+S4_0[label="S4_0: \n b"];
+S3_0 -> S4_0[label="time +=10 \n @10", style="bold", color="red"];
+S2_0 -> S3_0[label="user.ENTERKEY \n @10"];
+S5_0[label="S5_0: \n b"];
+S6_0[label="S6_0: \n b"];
+S5_0 -> S6_0[label="time +=180 \n @20", style="bold", color="red"];
+S4_0 -> S5_0[label="authentication.CHECKKEY \n @20"];
+S7_0[label="S7_0: \n b"];
+S6_0 -> S7_0[label="steven_seagull.BREAKIN \n @200"];
+S8_0[label="S8_0: \n b"];
+S9_0[label="S9_0: \n b"];
+S8_0 -> S9_0[label="time +=5 \n @200", style="bold", color="red"];
+S7_0 -> S8_0[label="door.BREAKDOOR \n @200"];
+S10_0[label="S10_0: \n b"];
+S11_0[label="S11_0: \n b"];
+S10_0 -> S11_0[label="time +=195 \n @205", style="bold", color="red"];
+S9_0 -> S10_0[label="controller.SETDOORSTATUS \n @205"];
+S12_0[label="S12_0: \n b"];
+S11_0 -> S12_0[label="steven_seagull.BREAKIN \n @400"];
+S13_0[label="S13_0: \n b"];
+S14_0[label="S14_0: \n b"];
+S13_0 -> S14_0[label="time +=5 \n @400", style="bold", color="red"];
+S12_0 -> S13_0[label="door.BREAKDOOR \n @400"];
+S14_0 -> S10_0[label="controller.SETDOORSTATUS \n @405 -> shift(+200)"];
+}
