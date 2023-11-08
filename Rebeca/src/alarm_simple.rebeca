@@ -1,0 +1,176 @@
+env int doorSensor_id = 1; 
+env int user_key = 2;
+env int user_door = 3; 
+
+reactiveclass Controller(10) {
+    knownrebecs {
+        Sensor door_sensor;
+        Authentication auth;
+        Door door;
+    }
+    statevars {
+        boolean armed; 
+        boolean alarm; 
+        boolean door_locked;
+        boolean door_unlocked; 
+    }
+
+    Controller() {
+        armed = false;
+        alarm = false;
+        door_locked = false; 
+        door_unlocked = false; 
+    }
+
+    boolean setArmed(){
+        armed = true; 
+    }
+    
+    boolean setUnarmed(){
+        armed = true; 
+    }
+
+    msgsrv authenticatedUser() {
+        armed = !armed;
+        
+    }
+
+    msgsrv setSensorState(int sensor, boolean state) {
+        if (sensor == doorSensor_id) {
+            door_unlocked = state; 
+        }
+    }
+}
+
+reactiveclass Sensor(5) {
+    knownrebecs {
+        Controller controller;
+    }
+
+    statevars {
+        boolean isOpen;
+        int sensor_id; 
+    }
+
+    Sensor(int id) {
+        isOpen = false; 
+        sensor_id = id; 
+    }
+
+    msgsrv opened() {
+        isOpen = true;
+        controller.setSensorState(sensor_id, true);
+    }
+
+    msgsrv closed() {
+        isOpen = false; 
+        controller.setSensorState(sensor_id, false);
+    }
+}
+
+
+reactiveclass Door(5) {
+    knownrebecs {
+        Sensor d_sensor;
+    }
+    
+    statevars {
+        boolean isLocked;
+        boolean isOpen;
+    }
+
+    Door() {
+        isLocked = false; 
+        isOpen = false; 
+    }
+
+    msgsrv setDoorOpen() {
+        if (!isLocked && !isOpen){
+            isOpen = true; 
+        }
+    }
+
+    msgsrv setDoorClosed() {
+        if (!isOpen) {
+            delay(5);
+            isLocked = true;
+        }
+    }
+
+    msgsrv setDoorlocked() {
+        if(!isOpen){
+            delay(5);
+            isLocked = true;
+        }
+    }
+
+    msgsrv setDoorLockStatus(boolean status) {
+        isLocked = status; 
+    }
+
+    msgsrv setDoorUnlocked() {
+        delay(5);
+        isLocked = false; 
+    }
+
+}
+
+// reactiveclass Room(5) {
+//     knownrebecs {
+//         Controller controller;
+//     }
+//     statevars {
+//         boolean occupied;
+//     }
+
+//     Room() {
+//         occupied = false; 
+//     }
+
+//     msgsrv roomstatus() {
+
+//     }
+
+// }
+
+reactiveclass Authentication(5) {
+    
+    knownrebecs {
+        Controller controller;
+    }
+
+    statevars {
+        boolean auth_key;
+        int valid_key;
+        int valid_code;
+        int attempts; 
+    }
+
+    Authentication(int key, int code) {
+        auth_key = false; 
+        valid_key = key;
+        valid_code = code;  
+        attempts = 0;
+    }
+
+    msgsrv checkKey(int key) {
+        if(key == valid_key) {
+            auth_key = true;
+        } else {
+            auth_key = false; 
+        }
+    }
+
+    msgsrv checkCode(int code) {
+        if(auth_key && code == valid_code) {
+            controller.authenticatedUser();
+        }
+    }
+}
+
+main {
+    Controller controller(d_sensor, authentication, door):();
+    Sensor d_sensor(controller):(doorSensor_id);
+    Authentication authentication(controller):(user_key, user_door);
+    Door door(d_sensor):();
+}
