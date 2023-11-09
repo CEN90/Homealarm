@@ -5,7 +5,7 @@ env int user_door = 3;
 env int DOOR_DELAY = 5;
 env int USER_DELAY = 10;
 env int AUTH_DELAY = 10;
-env int BREAKIN_DELAY = 200;
+env int BREAKIN_DELAY = 30;
 
 reactiveclass Controller(10) {
     knownrebecs {
@@ -26,7 +26,7 @@ reactiveclass Controller(10) {
         door_open = false;
     }
 
-    msgsrv authenticatedUser() {
+    msgsrv lockedUser() {
         armed = !armed;    
 
         if (alarm) {
@@ -51,6 +51,49 @@ reactiveclass Controller(10) {
 
     msgsrv alarma() {
         alarm = true;
+    }
+}
+
+reactiveclass Authentication(5) {
+    knownrebecs {
+        Controller controller;
+        User user;
+    }
+
+    statevars {
+        boolean auth_key;
+        int valid_key;
+        int valid_code;
+        int attempts; 
+    }
+
+    Authentication(int key, int code) {
+        auth_key = false; 
+        valid_key = key;
+        valid_code = code;  
+        attempts = 0;
+    }
+
+    msgsrv checkKey(int key) {
+        if(key == valid_key) {
+            auth_key = true;
+        } else {
+            auth_key = false; 
+        }
+
+        user.keyChecked(auth_key) after(AUTH_DELAY);
+    }
+
+    msgsrv checkCode(int code) {
+        boolean valid = false;
+
+        if(auth_key && code == valid_code) {
+            controller.lockedUser();
+            valid = true;
+        }
+
+        auth_key = false;
+        user.codeChecked(valid) after(AUTH_DELAY);
     }
 }
 
@@ -100,6 +143,14 @@ reactiveclass Door(5) {
         isLocked = false;
         controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
     }
+
+    msgsrv getLockStatus() {
+        ((User)sender).setStatus(isLocked);
+    }
+
+    msgsrv spiedOn() {
+        ((BadActor)sender).spyingDoor(isLocked);
+    }
 }
 
 reactiveclass BadActor(5) {
@@ -110,55 +161,15 @@ reactiveclass BadActor(5) {
     statevars { }
 
     BadActor() {
-        self.breakin() after(BREAKIN_DELAY);
+        self.spyingDoor(false) after(BREAKIN_DELAY);
     }
 
-    msgsrv breakin() {
-        door.breakDoor();
-        self.breakin() after(BREAKIN_DELAY);
-    }
-}
-
-reactiveclass Authentication(5) {
-    knownrebecs {
-        Controller controller;
-        User user;
-    }
-
-    statevars {
-        boolean auth_key;
-        int valid_key;
-        int valid_code;
-        int attempts; 
-    }
-
-    Authentication(int key, int code) {
-        auth_key = false; 
-        valid_key = key;
-        valid_code = code;  
-        attempts = 0;
-    }
-
-    msgsrv checkKey(int key) {
-        if(key == valid_key) {
-            auth_key = true;
+    msgsrv spyingDoor(boolean locked) {
+        if (locked) {
+            door.breakDoor();
         } else {
-            auth_key = false; 
+            door.spiedOn() after(BREAKIN_DELAY);
         }
-
-        user.keyChecked(auth_key) after(AUTH_DELAY);
-    }
-
-    msgsrv checkCode(int code) {
-        boolean valid = false;
-
-        if(auth_key && code == valid_code) {
-            controller.authenticatedUser();
-            valid = true;
-        }
-
-        auth_key = false;
-        user.codeChecked(valid) after(AUTH_DELAY);
     }
 }
 
@@ -170,16 +181,16 @@ reactiveclass User(5) {
 
     statevars {
         int key, code;
-        boolean authenticated;
+        boolean locked;
     }
 
     User(int k, int c) {
         key = k;
         code = c;
+        locked = false;
 
         // self.loop() after(USER_DELAY);
-        self.enterKey() after(USER_DELAY); // works
-        // self.openDoor() after(USER_DELAY * 2);
+        self.enterKey() after(USER_DELAY); // works 
     }
 
     msgsrv enterKey() {
@@ -196,50 +207,45 @@ reactiveclass User(5) {
 
     msgsrv codeChecked(boolean valid) {
         if (valid) {
-            authenticated = !authenticated;
+            door.getLockStatus();
         }
 
-        self.openDoor() after(USER_DELAY);
+        if (locked) {
+            self.openDoor() after(USER_DELAY * 2);
+        } else {
+            self.enterKey() after(USER_DELAY * 2);
+        }
+    }
+
+    msgsrv setStatus(boolean status) {
+        locked = status;
     }
 
     msgsrv openDoor() {
-        if (authenticated) {
-            door.openDoor() after(USER_DELAY);
-        }
-
-        self.closeDoor() after(USER_DELAY);
+        door.openDoor();
+        self.closeDoor() after(USER_DELAY * 2);
     }
 
     msgsrv closeDoor() {
-        if (authenticated) {
-            door.closeDoor() after(USER_DELAY);
-        }
+        door.closeDoor();
+        self.enterKey() after(USER_DELAY * 5);
     }
 
 
     msgsrv loop() {
         // send open door
-        // send close door
-        // send auth
-        // goto top
-
-        // send open door
         door.openDoor();
-        // delay(USER_DELAY);
+        delay(USER_DELAY * 10);
         
         // send close door
         door.closeDoor();
-        // delay(USER_DELAY);
+        delay(USER_DELAY);
 
         self.enterKey();
-        // delay(USER_DELAY);
+        delay(USER_DELAY);
 
         self.loop() after(USER_DELAY * 10);
     }
-
-
-
-
 }
 
 main {
