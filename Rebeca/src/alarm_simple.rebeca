@@ -232,20 +232,20 @@ reactiveclass User(5) {
     }
 
 
-    msgsrv loop() {
-        // send open door
-        door.openDoor();
-        delay(USER_DELAY * 10);
+    // msgsrv loop() {
+    //     // send open door
+    //     door.openDoor();
+    //     delay(USER_DELAY * 10);
         
-        // send close door
-        door.closeDoor();
-        delay(USER_DELAY);
+    //     // send close door
+    //     door.closeDoor();
+    //     delay(USER_DELAY);
 
-        self.enterKey();
-        delay(USER_DELAY);
+    //     self.enterKey();
+    //     delay(USER_DELAY);
 
-        self.loop() after(USER_DELAY * 10);
-    }
+    //     self.loop() after(USER_DELAY * 10);
+    // }
 }
 
 main {
