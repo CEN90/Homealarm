@@ -9,21 +9,54 @@ env int BREAKIN_DELAY = 30;
 
 reactiveclass Controller(10) {
     knownrebecs {
-        Authentication auth;
+        //Authentication auth;
         Door door;
+        User user;
     }
     statevars {
         boolean armed; 
         boolean alarm; 
         boolean door_locked;
         boolean door_open;
+
+        //authentication variables 
+        boolean  auth_key;
+        int valid_key; 
+        int valid_code;
+        int attemps; 
     }
 
-    Controller() {
+    Controller(int key, int code) {
         armed = false;
         alarm = false;
         door_locked = false; 
         door_open = false;
+
+        auth_key = false;
+        valid_key = key;
+        valid_code = code; 
+        attemps = 0;
+    }
+
+    msgsrv checkKey(int key) {
+        if(key == valid_key) {
+            auth_key = true; 
+        } else {
+            auth_key = false; 
+        }
+        user.keyChecked(auth_key) after(AUTH_DELAY);
+    }
+
+    msgsrv checkCode(int code) {
+        boolean valid = false; 
+
+        if(auth_key && code == valid_code) {
+            self.lockedUser();
+            valid = true; 
+        }
+
+        auth_key = false;
+        user.codeChecked(valid) after(AUTH_DELAY);
     }
 
     msgsrv lockedUser() {
@@ -54,48 +87,48 @@ reactiveclass Controller(10) {
     }
 }
 
-reactiveclass Authentication(5) {
-    knownrebecs {
-        Controller controller;
-        User user;
-    }
+// reactiveclass Authentication(5) {
+//     knownrebecs {
+//         Controller controller;
+//         User user;
+//     }
 
-    statevars {
-        boolean auth_key;
-        int valid_key;
-        int valid_code;
-        int attempts; 
-    }
+//     statevars {
+//         boolean auth_key;
+//         int valid_key;
+//         int valid_code;
+//         int attempts; 
+//     }
 
-    Authentication(int key, int code) {
-        auth_key = false; 
-        valid_key = key;
-        valid_code = code;  
-        attempts = 0;
-    }
+//     Authentication(int key, int code) {
+//         auth_key = false; 
+//         valid_key = key;
+//         valid_code = code;  
+//         attempts = 0;
+//     }
 
-    msgsrv checkKey(int key) {
-        if(key == valid_key) {
-            auth_key = true;
-        } else {
-            auth_key = false; 
-        }
+//     msgsrv checkKey(int key) {
+//         if(key == valid_key) {
+//             auth_key = true;
+//         } else {
+//             auth_key = false; 
+//         }
 
-        user.keyChecked(auth_key) after(AUTH_DELAY);
-    }
+//         user.keyChecked(auth_key) after(AUTH_DELAY);
+//     }
 
-    msgsrv checkCode(int code) {
-        boolean valid = false;
+//     msgsrv checkCode(int code) {
+//         boolean valid = false;
 
-        if(auth_key && code == valid_code) {
-            controller.lockedUser();
-            valid = true;
-        }
+//         if(auth_key && code == valid_code) {
+//             controller.lockedUser();
+//             valid = true;
+//         }
 
-        auth_key = false;
-        user.codeChecked(valid) after(AUTH_DELAY);
-    }
-}
+//         auth_key = false;
+//         user.codeChecked(valid) after(AUTH_DELAY);
+//     }
+// }
 
 reactiveclass Door(5) {
     knownrebecs {
@@ -175,7 +208,8 @@ reactiveclass BadActor(5) {
 
 reactiveclass User(5) {
     knownrebecs {
-        Authentication auth;
+        //Authentication auth;
+        Controller controller; 
         Door door;
     }
 
@@ -194,12 +228,12 @@ reactiveclass User(5) {
     }
 
     msgsrv enterKey() {
-        auth.checkKey(key) after(USER_DELAY);
+        controller.checkKey(key) after(USER_DELAY);
     }
 
     msgsrv keyChecked(boolean valid) {
         if (valid) {
-            auth.checkCode(code) after(USER_DELAY);
+            controller.checkCode(code) after(USER_DELAY);
         } else {
             self.enterKey();
         }
@@ -249,9 +283,9 @@ reactiveclass User(5) {
 }
 
 main {
-    Authentication authentication(controller, user):(user_key, user_door);
-    User user(authentication, door): (user_key, user_door);
-    Controller controller(authentication, door):();
-    BadActor steven_seagal(door): ();
+    //Authentication authentication(controller, user):(user_key, user_door);
+    Controller controller(door, user):(user_key, user_door);
+    User user(controller, door): (user_key, user_door);
+    BadActor intruder(door): ();
     Door door(controller):();
 }
