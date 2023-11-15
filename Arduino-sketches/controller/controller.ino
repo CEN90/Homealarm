@@ -1,26 +1,28 @@
 #include <Servo.h>
 
 #define DOOR_SENSOR         PIN4
-#define DOOR_LOCK           PIN7
-#define AUTH_IN             PIN2
+#define DOOR_LOCK           PIN2
+#define AUTH_IN             PIN3
 
 #define SERVO_POS_LOCKED    90
 #define SERVO_POS_UNLOCKED  0
+
+#define POLL_TIME           10
 
 Servo lock_servo;
 
 boolean armed = false;
 boolean alarm = false;
 boolean auth_ok = false;
-boolean door_open = false;
+boolean door_open = LOW;
 
 boolean prev_door_state = false;
 
 void setup() {
     pinMode(AUTH_IN, INPUT); 
-    pinMode(DOOR_SENSOR, INPUT_PULLUP);
+    pinMode(DOOR_SENSOR, INPUT_PULLUP); // Use internal pull-up in arduino
 
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT); // testing
 
     lock_servo.attach(DOOR_LOCK);
     lock_servo.write(SERVO_POS_UNLOCKED);   
@@ -38,30 +40,35 @@ boolean setDoorLock(boolean lock_door) {
     return lock_door;
 }
 
-void loop() {
-    // auth_ok = digitalRead(AUTH_IN);
-    door_open = digitalRead(DOOR_SENSOR);
+void checkAlarmConditions() {
+    if (armed && door_open) {
+        alarm = true; 
+    }
+}
 
-    // if (door_open && !prev_door_state) {
-    //   prev_door_state = door_open;
-    // } else {
-    //   prev_door_state = setDoorLock(door_open);
-    // }
+void setSensorReadState() {
+    door_open = !door_open;
+}
+
+void loop() {
+    auth_ok = digitalRead(AUTH_IN);
+
+    if (!digitalRead(DOOR_SENSOR)) { // logical LOW is active state when using pull-up
+        door_open = !door_open;
+    }
 
     setDoorLock(door_open);
 
     // Authentication branch
-    // if (auth_ok) {
-    //     alarm = false; // Always turn off alarm when authenticated
+    if (auth_ok) {
+        alarm = false; // Always turn off alarm when authenticated
 
-    //     armed = !armed; // Flip armed status
-    //     setDoorLock(armed); // Door lock status should follow armed
-    // }
+        armed = !armed; // Flip armed status
+        setDoorLock(armed); // Door lock status should follow armed
+    }
     
-    // // Alarm branch
-    // if (armed && door_open) {
-    //     alarm = true; 
-    // }
+    // Alarm branch
+    checkAlarmConditions();
 
-    delay(10);
+    delay(POLL_TIME * 100);
 }
