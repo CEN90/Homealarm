@@ -216,19 +216,23 @@ reactiveclass User(5) {
     statevars {
         int key, code;
         boolean locked;
+        int user_delay;
     }
 
     User(int k, int c) {
         key = k;
         code = c;
         locked = false;
+        user_delay = 0;
 
         // self.loop() after(USER_DELAY);
-        self.enterKey() after(USER_DELAY); // works 
+        self.enterKey(); /* after(USER_DELAY); */ // works 
     }
 
     msgsrv enterKey() {
-        controller.checkKey(key) after(USER_DELAY);
+        //USER_DELAY = ?(10,15);
+        user_delay = ?(10, 15);
+        controller.checkKey(key) after(user_delay);
     }
 
     msgsrv keyChecked(boolean valid) {
@@ -284,8 +288,8 @@ reactiveclass User(5) {
 
 main {
     //Authentication authentication(controller, user):(user_key, user_door);
-    Controller controller(door, user):(user_key, user_door);
     User user(controller, door): (user_key, user_door);
+    Controller controller(door, user):(user_key, user_door);
     BadActor intruder(door): ();
     Door door(controller):();
 }
