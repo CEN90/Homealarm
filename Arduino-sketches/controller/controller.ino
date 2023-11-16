@@ -1,74 +1,133 @@
-#include <Servo.h>
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Keypad.h>
 
-#define DOOR_SENSOR         PIN4
-#define DOOR_LOCK           PIN2
-#define AUTH_IN             PIN3
+// RFID reader relevant part
+constexpr uint8_t RST_PIN = 9; 
+constexpr uint8_t SS_PIN = 10; 
+MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
-#define SERVO_POS_LOCKED    90
-#define SERVO_POS_UNLOCKED  0
+// Keypad matrix
+const byte ROWS = 2; // Four rows
+const byte COLS = 2; // Three columns
+byte keys[ROWS][COLS] = { {1, 3}, {2, 4} };
+byte rowPins[ROWS] = { 2, 3 }; // 2, 3
+byte colPins[COLS] = { 4, 5 }; // 4, 5
+Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-#define POLL_TIME           10
-
-Servo lock_servo;
-
-boolean armed = false;
-boolean alarm = false;
-boolean auth_ok = false;
-boolean door_open = LOW;
-
-boolean prev_door_state = false;
+// Shit for Auth
+size_t name_len = 11;
+boolean valid_key = false;
+byte valid_name[12] = {'C','a','r','l',' ','B','a','t','m','a','n','\0'};
 
 void setup() {
-    pinMode(AUTH_IN, INPUT); 
-    pinMode(DOOR_SENSOR, INPUT_PULLUP); // Use internal pull-up in arduino
-
-    pinMode(LED_BUILTIN, OUTPUT); // testing
-
-    lock_servo.attach(DOOR_LOCK);
-    lock_servo.write(SERVO_POS_UNLOCKED);   
-}
-
-boolean setDoorLock(boolean lock_door) {
-    int new_pos = SERVO_POS_UNLOCKED;
-
-    if (lock_door) {
-        new_pos = SERVO_POS_LOCKED;
-    }
-
-    lock_servo.write(new_pos);   
-
-    return lock_door;
-}
-
-void checkAlarmConditions() {
-    if (armed && door_open) {
-        alarm = true; 
-    }
-}
-
-void setSensorReadState() {
-    door_open = !door_open;
+    Serial.begin(115200); // Initialize serial communications with the PC
+    while (!Serial);
+    SPI.begin(); // Init SPI bus
+    mfrc522.PCD_Init(); // Init MFRC522
+    mfrc522.PCD_DumpVersionToSerial(); // Show details of PCD
 }
 
 void loop() {
-    auth_ok = digitalRead(AUTH_IN);
+    readCard();
+    // writeCard();
 
-    if (!digitalRead(DOOR_SENSOR)) { // logical LOW is active state when using pull-up
-        door_open = !door_open;
+    byte key = kpd.getKey();
+    if(key) {
+        Serial.println(key);
     }
 
-    setDoorLock(door_open);
+}
 
-    // Authentication branch
-    if (auth_ok) {
-        alarm = false; // Always turn off alarm when authenticated
-
-        armed = !armed; // Flip armed status
-        setDoorLock(armed); // Door lock status should follow armed
+void readCard() {
+    if (!mfrc522.PICC_IsNewCardPresent()) {
+        return;
     }
-    
-    // Alarm branch
-    checkAlarmConditions();
 
-    delay(POLL_TIME * 100);
+    if (!mfrc522.PICC_ReadCardSerial()) {
+        return;
+    }
+
+    byte buffer[20];
+    byte buffer_len = 20;
+
+    if (readCardData(buffer, buffer_len))
+    {
+        Serial.println((char*) buffer);
+
+        if (strcmp((char *) buffer, (char *) valid_name) == 0) {
+            valid_key = true;
+            Serial.println("Valid key found");
+        } else {
+            valid_key = false;
+            Serial.println("Invalid key found");
+        }
+    }
+
+    mfrc522.PCD_Reset();
+}
+
+boolean readCardData(byte *name, byte len) {
+    byte block = 1;
+   
+    MFRC522::MIFARE_Key key;
+    MFRC522::StatusCode status;
+
+    for (byte i = 0; i < 6; i++)
+        key.keyByte[i] = 0xFF;
+
+    status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("PCD_Authenticate() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        
+        return false;
+    } 
+
+    status = mfrc522.MIFARE_Read(block, name, &len);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("Reading failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        
+        return false;
+    }
+
+    return true;
+}
+
+void writeCard() {
+    byte name[16] = {'C','a','r','l',' ','B','a','t','m','a','n','\0',' ',' ',' ',' '};
+    MFRC522::MIFARE_Key key;
+    MFRC522::StatusCode status;
+
+    for (byte i = 0; i < 6; i++)
+        key.keyByte[i] = 0xFF;
+
+    // Look for new cards
+    if (!mfrc522.PICC_IsNewCardPresent()) {
+        return;
+    }
+
+    // Select one of the cards
+    if (!mfrc522.PICC_ReadCardSerial()) {
+        return;
+    }
+
+    byte block = 1;
+
+    status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("PCD_Authenticate() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    } else 
+        Serial.println(F("PCD_Authenticate() success: ")); 
+
+    status = mfrc522.MIFARE_Write(block, name, 16);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("MIFARE_Write() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    } else
+        Serial.println(F("MIFARE_Write() success: "));
 }
