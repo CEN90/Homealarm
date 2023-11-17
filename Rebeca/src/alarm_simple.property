@@ -1,11 +1,17 @@
 property {
     define {      
-        a = controller.alarm && !controller.armed && door.isOpen;
-        b = !controller.alarm && controller.armed && door.isOpen;
+        alarm = controller.alarm;
+        armed = controller.armed;
+        door_open = door.isOpen;
     }
 
     Assertion {
-         safety_prop1: !a || !b;
-         safety_prop2: !(a && b);
+        //  safety_prop1: !a || !b;
+        //  safety_prop2: !(a && b);
+        safety_prop1: !(alarm && !armed); // Alarm is not on while armed
+        safety_prop2: !(alarm && armed && !door_open); // Alarm is on when door is open and armed
+        
+        //safety_prop1: !(alarm && !armed);
+        //safety_prop2: !(alarm && armed && !door_open);
     }
 }

@@ -31,8 +31,7 @@ void readCard() {
     byte buffer[20];
     byte buffer_len = 20;
 
-    if (readCardData(buffer, buffer_len))
-    {
+    if (readCardData(buffer, buffer_len)) {
         Serial.println((char*) buffer);
 
         if (strcmp((char *) buffer, (char *) valid_name) == 0) {
