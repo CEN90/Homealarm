@@ -19,6 +19,8 @@ void loop() {
     }
 }
 
+
+// Issue: works only once, need reset before reading card again!
 void readCard() {
     if (!mfrc522.PICC_IsNewCardPresent()) {
         return;
