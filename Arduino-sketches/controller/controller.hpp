@@ -3,11 +3,18 @@
 #include <Keypad.h>
 #include <Servo.h>
 
+// Times used in the sketch
+constexpr uint8_t POLL_TIME = 10; 
+constexpr long KEYPRESS_TIME = 10000; 
+constexpr long ERROR_KEY_TIME = 3000; 
+
+// Alarma!
+constexpr uint8_t ALARM_OUTPUT = 8;
 // RFID reader relevant ports
 constexpr uint8_t RST_PIN = 9; 
 constexpr uint8_t SS_PIN = 10; 
 // Door relevant ports
-constexpr uint8_t DOOR_SENSOR = PIN0;
+constexpr uint8_t DOOR_SENSOR = PIN6;
 constexpr uint8_t DOOR_LOCK = PIN7;
 // Servo motor limits
 constexpr uint8_t SERVO_POS_LOCKED = 90; 
@@ -36,7 +43,7 @@ void setDoorLock(boolean lock_door) {
     int new_pos = lock_door ? SERVO_POS_LOCKED : SERVO_POS_UNLOCKED;
     lock_servo.write(new_pos);
 
-    Serial.print("Setting door to ");
+    Serial.print(F("Setting door to "));
     String lock = lock_door ? "locked" : "unlocked";
     Serial.println(lock);
 }

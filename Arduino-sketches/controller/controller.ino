@@ -1,10 +1,6 @@
 #include "controller.hpp"
 
-constexpr uint8_t POLL_TIME = 10; 
-constexpr long KEYPRESS_TIME = 10000; 
-constexpr long ERROR_KEY_TIME = 3000; 
-
-unsigned long timeout;
+unsigned long timeout; // Keep track after scan key
 
 boolean armed = false;
 boolean alarm = false;
@@ -12,8 +8,9 @@ boolean is_valid_key = false;
 boolean is_valid_code = false;
 boolean door_open = LOW;
 
+// Storage for keys pressed by the user
 byte read_keypresse[CODE_LEN] = { 0, 0, 0, 0 };
-byte key_press_index = 0;
+byte key_press_index = 0; // Last index input
 
  
 void setup() {
@@ -26,9 +23,16 @@ void setup() {
     // Servo init
     lock_servo.attach(DOOR_LOCK);
     lock_servo.write(SERVO_POS_UNLOCKED); 
+
+    pinMode(ALARM_OUTPUT, OUTPUT);
+    pinMode(DOOR_SENSOR, INPUT_PULLUP);
 }
 
 void loop() {
+    door_open = digitalRead(DOOR_SENSOR); // testing only
+    // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed for true value, INPUT_PULLUP
+
+    // Only read if no valid key scanned 
     if (!is_valid_key) {
         readCard();
     }
@@ -36,7 +40,7 @@ void loop() {
     // Invalidate key if timeout
     if (is_valid_key && millis() >= timeout) {
         is_valid_key = false;
-        Serial.println("Timeout");
+        Serial.println(F("Timeout"));
     }
     
     // Read keypad only if valid key
@@ -46,20 +50,29 @@ void loop() {
     
     // If successful
     if (is_valid_key && is_valid_code) {
-    // if (is_valid_code) {
         resetKeypress();
         setArmedStatus();
         is_valid_key = false;
     }
     
     // Check if alarm is to be turned on last
-    // checkAlarmConditions();
-    
+    checkAlarmConditions();
+
+    // Turn on alarm if bad actor on tv
+    ALARMA(alarm);
+
     delay(POLL_TIME);
 }
 
 void checkAlarmConditions() {
-    alarm = armed && door_open;
+    if (armed && door_open) {
+        alarm = true;
+    }
+}
+
+void ALARMA(boolean alarm) {
+    int led = alarm ? HIGH : LOW;
+    digitalWrite(ALARM_OUTPUT, led);
 }
 
 void setArmedStatus() {
@@ -84,7 +97,7 @@ void readKeypad() {
         key_press_index += 1;
     }
     
-    // If entire code is inputted
+    // If entire code is input
     if (key_press_index == CODE_LEN) {
         is_valid_code = checkCode();
     }
@@ -112,7 +125,7 @@ void resetKeypress() {
     } 
 }
 
-// Issue: works only once, need reset before reading card again!
+
 void readCard() {
     if (!mfrc522.PICC_IsNewCardPresent()) {
         return;
@@ -125,19 +138,20 @@ void readCard() {
     byte buffer[20];
     byte buffer_len = 20;
 
+    // If successful read of card
     if (readCardData(buffer, buffer_len)) {
         Serial.println((char*) buffer);
 
         if (strcmp((char *) buffer, (char *) valid_name) == 0) {
             is_valid_key = true;
             resetKeypress();
-            Serial.println("Valid key found");
+            Serial.println(F("Valid key found"));
         } else {
             is_valid_key = false;
-            Serial.println("Invalid key found");
-            delay(ERROR_KEY_TIME);
+            Serial.println(F("Invalid key found"));
+            delay(ERROR_KEY_TIME); // Wait to avoid ugly loop
         }
     }
 
-    mfrc522.PCD_StopCrypto1();
+    mfrc522.PCD_StopCrypto1(); // Or else no new card can be scanned
 }
