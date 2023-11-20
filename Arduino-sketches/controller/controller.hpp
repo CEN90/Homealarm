@@ -37,7 +37,7 @@ void setDoorLock(boolean lock_door) {
     lock_servo.write(new_pos);
 
     Serial.print("Setting door to ");
-    String lock = lock_door ? "locked" : "locked";
+    String lock = lock_door ? "locked" : "unlocked";
     Serial.println(lock);
 }
 

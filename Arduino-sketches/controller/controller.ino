@@ -1,7 +1,8 @@
 #include "controller.hpp"
 
 constexpr uint8_t POLL_TIME = 10; 
-constexpr uint8_t KEYPRESS_TIME = 15000; 
+constexpr long KEYPRESS_TIME = 10000; 
+constexpr long ERROR_KEY_TIME = 3000; 
 
 unsigned long timeout;
 
@@ -28,12 +29,15 @@ void setup() {
 }
 
 void loop() {
-    readCard();
+    if (!is_valid_key) {
+        readCard();
+    }
 
     // Invalidate key if timeout
-    // if (millis() >= timeout) {
-    //     is_valid_key = false;
-    // }
+    if (is_valid_key && millis() >= timeout) {
+        is_valid_key = false;
+        Serial.println("Timeout");
+    }
     
     // Read keypad only if valid key
     if (is_valid_key) {
@@ -45,6 +49,7 @@ void loop() {
     // if (is_valid_code) {
         resetKeypress();
         setArmedStatus();
+        is_valid_key = false;
     }
     
     // Check if alarm is to be turned on last
@@ -130,8 +135,9 @@ void readCard() {
         } else {
             is_valid_key = false;
             Serial.println("Invalid key found");
+            delay(ERROR_KEY_TIME);
         }
     }
 
-    mfrc522.PCD_Reset();
+    mfrc522.PCD_StopCrypto1();
 }
