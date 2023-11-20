@@ -10,11 +10,12 @@ constexpr long ERROR_KEY_TIME = 3000;
 
 // Alarma!
 constexpr uint8_t ALARM_OUTPUT = 8;
+constexpr uint8_t ARMED_OUTPUT = PIN6;
 // RFID reader relevant ports
 constexpr uint8_t RST_PIN = 9; 
 constexpr uint8_t SS_PIN = 10; 
 // Door relevant ports
-constexpr uint8_t DOOR_SENSOR = PIN6;
+constexpr uint8_t DOOR_SENSOR = PIN_WIRE_SDA;
 constexpr uint8_t DOOR_LOCK = PIN7;
 // Servo motor limits
 constexpr uint8_t SERVO_POS_LOCKED = 90; 

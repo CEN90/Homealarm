@@ -7,6 +7,7 @@ boolean alarm = false;
 boolean is_valid_key = false;
 boolean is_valid_code = false;
 boolean door_open = LOW;
+boolean scream_alarm = true;
 
 // Storage for keys pressed by the user
 byte read_keypresse[CODE_LEN] = { 0, 0, 0, 0 };
@@ -25,12 +26,15 @@ void setup() {
     lock_servo.write(SERVO_POS_UNLOCKED); 
 
     pinMode(ALARM_OUTPUT, OUTPUT);
+    pinMode(ARMED_OUTPUT, OUTPUT);
     pinMode(DOOR_SENSOR, INPUT_PULLUP);
 }
 
 void loop() {
     door_open = digitalRead(DOOR_SENSOR); // testing only
     // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed for true value, INPUT_PULLUP
+
+    digitalWrite(ARMED_OUTPUT, armed);
 
     // Only read if no valid key scanned 
     if (!is_valid_key) {
@@ -56,7 +60,7 @@ void loop() {
     }
     
     // Check if alarm is to be turned on last
-    checkAlarmConditions();
+    checkAlarmConditions(); // Rewrite later, will loop output if alarm on
 
     delay(POLL_TIME);
 }
@@ -69,11 +73,15 @@ void checkAlarmConditions() {
 }
 
 void ALARMA() {
-    digitalWrite(ALARM_OUTPUT, HIGH);
-    Serial.println(F("ALARMA!"));
+    if (scream_alarm) {
+        digitalWrite(ALARM_OUTPUT, HIGH);
+        Serial.println(F("ALARMA!"));
+        scream_alarm = false;
+    }
 }
 
 void turnOffAlarm() {
+    scream_alarm = true;
     digitalWrite(ALARM_OUTPUT, LOW);
 }
 
@@ -82,6 +90,9 @@ void setArmedStatus() {
     armed = !armed;
     turnOffAlarm();
     setDoorLock(armed);
+
+    // int arm_led = armed ? HIGH : LOW;
+    // digitalWrite(ALARM_OUTPUT, arm_led);
 }
 
 void readKeypad() {
