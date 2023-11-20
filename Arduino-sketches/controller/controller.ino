@@ -58,26 +58,29 @@ void loop() {
     // Check if alarm is to be turned on last
     checkAlarmConditions();
 
-    // Turn on alarm if bad actor on tv
-    ALARMA(alarm);
-
     delay(POLL_TIME);
 }
 
 void checkAlarmConditions() {
     if (armed && door_open) {
         alarm = true;
+        ALARMA(); // Turn on alarm if bad actor on tv
     }
 }
 
-void ALARMA(boolean alarm) {
-    int led = alarm ? HIGH : LOW;
-    digitalWrite(ALARM_OUTPUT, led);
+void ALARMA() {
+    digitalWrite(ALARM_OUTPUT, HIGH);
+    Serial.println(F("ALARMA!"));
+}
+
+void turnOffAlarm() {
+    digitalWrite(ALARM_OUTPUT, LOW);
 }
 
 void setArmedStatus() {
     alarm = false;
     armed = !armed;
+    turnOffAlarm();
     setDoorLock(armed);
 }
 
