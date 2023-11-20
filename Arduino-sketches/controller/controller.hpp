@@ -1,32 +1,54 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Keypad.h>
+#include <Servo.h>
 
-// RFID reader relevant part
+// RFID reader relevant ports
 constexpr uint8_t RST_PIN = 9; 
 constexpr uint8_t SS_PIN = 10; 
-MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
+// Door relevant ports
+constexpr uint8_t DOOR_SENSOR = PIN0;
+constexpr uint8_t DOOR_LOCK = PIN7;
+// Servo motor limits
+constexpr uint8_t SERVO_POS_LOCKED = 90; 
+constexpr uint8_t SERVO_POS_UNLOCKED = 0; 
 
 // Keypad matrix
-const byte ROWS = 2; // Four rows
-const byte COLS = 2; // Three columns
-byte keys[ROWS][COLS] = { {1, 3}, {2, 4} };
-byte rowPins[ROWS] = { 2, 3 }; // 2, 3
-byte colPins[COLS] = { 4, 5 }; // 4, 5
+const byte ROWS = 2; // Two rows
+const byte COLS = 2; // Two columns
+constexpr uint8_t CODE_LEN = 4;
+byte keys[ROWS][COLS] = { {1, 3}, {2, 4} }; // The return from keypress
+byte rowPins[ROWS] = { PIN2, PIN3 }; // 2, 3
+byte colPins[COLS] = { PIN4, PIN5 }; // 4, 5
+
+// Instance declarations
+MFRC522 mfrc522(SS_PIN, RST_PIN); // MFRC522 instance
+Servo lock_servo; // Servo instance
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // Shit for Auth
 size_t name_len = 11;
-boolean valid_key = false;
 byte valid_name[12] = {'C','a','r','l',' ','B','a','t','m','a','n','\0'};
+constexpr byte valid_code[CODE_LEN] = { 1, 2, 3, 4 };
 
+// Controls the servo motor
+void setDoorLock(boolean lock_door) {
+    int new_pos = lock_door ? SERVO_POS_LOCKED : SERVO_POS_UNLOCKED;
+    lock_servo.write(new_pos);
 
+    Serial.print("Setting door to ");
+    String lock = lock_door ? "locked" : "locked";
+    Serial.println(lock);
+}
+
+// Helper function for reading card, exits early on error
 boolean readCardData(byte *name, byte len) {
     byte block = 1;
    
     MFRC522::MIFARE_Key key;
     MFRC522::StatusCode status;
 
+    // Get key for authenticating the bank on card
     for (byte i = 0; i < 6; i++)
         key.keyByte[i] = 0xFF;
 
@@ -49,7 +71,7 @@ boolean readCardData(byte *name, byte len) {
     return true;
 }
 
-
+// Helper function for writing, not used later
 void writeCard() {
     byte name[16] = {'C','a','r','l',' ','B','a','t','m','a','n','\0',' ',' ',' ',' '};
     MFRC522::MIFARE_Key key;

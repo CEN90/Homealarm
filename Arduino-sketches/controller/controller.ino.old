@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 #define DOOR_SENSOR         PIN4
-#define DOOR_LOCK           PIN2
+#define DOOR_LOCK           PIN7
 #define AUTH_IN             PIN3
 
 #define SERVO_POS_LOCKED    90
@@ -19,10 +19,8 @@ boolean door_open = LOW;
 boolean prev_door_state = false;
 
 void setup() {
-    pinMode(AUTH_IN, INPUT); 
+    // pinMode(AUTH_IN, INPUT); 
     pinMode(DOOR_SENSOR, INPUT_PULLUP); // Use internal pull-up in arduino
-
-    pinMode(LED_BUILTIN, OUTPUT); // testing
 
     lock_servo.attach(DOOR_LOCK);
     lock_servo.write(SERVO_POS_UNLOCKED);   
@@ -51,24 +49,25 @@ void setSensorReadState() {
 }
 
 void loop() {
-    auth_ok = digitalRead(AUTH_IN);
+    // auth_ok = digitalRead(AUTH_IN);
 
-    if (!digitalRead(DOOR_SENSOR)) { // logical LOW is active state when using pull-up
-        door_open = !door_open;
-    }
+    // if (!digitalRead(DOOR_SENSOR)) { // logical LOW is active state when using pull-up
+    //     door_open = !door_open;
+    // }
 
     setDoorLock(door_open);
+    door_open = !door_open;
 
     // Authentication branch
-    if (auth_ok) {
-        alarm = false; // Always turn off alarm when authenticated
+    // if (auth_ok) {
+    //     alarm = false; // Always turn off alarm when authenticated
 
-        armed = !armed; // Flip armed status
-        setDoorLock(armed); // Door lock status should follow armed
-    }
+    //     armed = !armed; // Flip armed status
+    //     setDoorLock(armed); // Door lock status should follow armed
+    // }
     
     // Alarm branch
-    checkAlarmConditions();
+    // checkAlarmConditions();
 
     delay(POLL_TIME * 100);
 }
