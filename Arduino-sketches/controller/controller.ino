@@ -7,7 +7,6 @@ boolean alarm = false;
 boolean is_valid_key = false;
 boolean is_valid_code = false;
 boolean door_open = LOW;
-boolean scream_alarm = true;
 
 // Storage for keys pressed by the user
 byte read_keypresse[CODE_LEN] = { 0, 0, 0, 0 };
@@ -32,7 +31,7 @@ void setup() {
 
 void loop() {
     door_open = digitalRead(DOOR_SENSOR); // testing only
-    // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed for true value, INPUT_PULLUP
+    // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed, INPUT_PULLUP => active LOW
 
     digitalWrite(ARMED_OUTPUT, armed);
 
@@ -42,11 +41,8 @@ void loop() {
     }
 
     // Invalidate key if timeout
-    if (is_valid_key && millis() >= timeout) {
-        is_valid_key = false;
-        Serial.println(F("Timeout"));
-    }
-    
+    checkTimeout();
+
     // Read keypad only if valid key
     if (is_valid_key) {
         readKeypad();
@@ -60,39 +56,39 @@ void loop() {
     }
     
     // Check if alarm is to be turned on last
-    checkAlarmConditions(); // Rewrite later, will loop output if alarm on
+    checkAlarmConditions();
 
     delay(POLL_TIME);
 }
 
+void checkTimeout() {
+    if (is_valid_key && millis() >= timeout) {
+        is_valid_key = false;
+        Serial.println(F("Timeout"));
+    }
+}
+
 void checkAlarmConditions() {
-    if (armed && door_open) {
-        alarm = true;
+    if (!alarm && armed && door_open) {
         ALARMA(); // Turn on alarm if bad actor on tv
     }
 }
 
 void ALARMA() {
-    if (scream_alarm) {
-        digitalWrite(ALARM_OUTPUT, HIGH);
-        Serial.println(F("ALARMA!"));
-        scream_alarm = false;
-    }
+    alarm = true;
+    Serial.println(F("ALARMA!"));
+    digitalWrite(ALARM_OUTPUT, HIGH);
 }
 
 void turnOffAlarm() {
-    scream_alarm = true;
+    alarm = false;
     digitalWrite(ALARM_OUTPUT, LOW);
 }
 
 void setArmedStatus() {
-    alarm = false;
     armed = !armed;
-    turnOffAlarm();
+    turnOffAlarm(); // Always turn off alarm if user authenticates
     setDoorLock(armed);
-
-    // int arm_led = armed ? HIGH : LOW;
-    // digitalWrite(ALARM_OUTPUT, arm_led);
 }
 
 void readKeypad() {
