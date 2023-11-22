@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Keypad.h>
-#include <Servo.h>
+// #include <Servo.h>
 
 // Times used in the sketch
 constexpr uint8_t POLL_TIME = 10; 
@@ -9,29 +9,34 @@ constexpr long KEYPRESS_TIME = 10000;
 constexpr long ERROR_KEY_TIME = 3000; 
 
 // Alarma!
-constexpr uint8_t ALARM_OUTPUT = 8;
-constexpr uint8_t ARMED_OUTPUT = PIN6;
+constexpr uint8_t ALARM_OUTPUT = PIN4;
+constexpr uint8_t ARMED_OUTPUT = PIN3;
 // RFID reader relevant ports
 constexpr uint8_t RST_PIN = 9; 
 constexpr uint8_t SS_PIN = 10; 
 // Door relevant ports
-constexpr uint8_t DOOR_SENSOR = PIN_WIRE_SDA;
-constexpr uint8_t DOOR_LOCK = PIN7;
+constexpr uint8_t DOOR_SENSOR = PIN_A0;
+// constexpr uint8_t DOOR_LOCK_SERVO = PIN_WIRE_SCL;
+constexpr uint8_t DOOR_LOCK = PIN2;
 // Servo motor limits
 constexpr uint8_t SERVO_POS_LOCKED = 90; 
 constexpr uint8_t SERVO_POS_UNLOCKED = 0; 
+// Status for is_key_valid
+constexpr uint8_t LED_KEY_VALID = PIN_A5;
 
 // Keypad matrix
 const byte ROWS = 2; // Two rows
 const byte COLS = 2; // Two columns
 constexpr uint8_t CODE_LEN = 4;
 byte keys[ROWS][COLS] = { {1, 3}, {2, 4} }; // The return from keypress
-byte rowPins[ROWS] = { PIN2, PIN3 }; // 2, 3
-byte colPins[COLS] = { PIN4, PIN5 }; // 4, 5
+byte rowPins[ROWS] = { PIN5, PIN6 }; // 2, 3
+byte colPins[COLS] = { PIN7, 8 }; // 4, 5
+// byte rowPins[ROWS] = { PIN2, PIN3 }; // 2, 3
+// byte colPins[COLS] = { PIN4, PIN5 }; // 4, 5
 
 // Instance declarations
 MFRC522 mfrc522(SS_PIN, RST_PIN); // MFRC522 instance
-Servo lock_servo; // Servo instance
+// Servo lock_servo; // Servo instance
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // Shit for Auth
@@ -41,8 +46,9 @@ constexpr byte valid_code[CODE_LEN] = { 1, 2, 3, 4 };
 
 // Controls the servo motor
 void setDoorLock(boolean lock_door) {
-    int new_pos = lock_door ? SERVO_POS_LOCKED : SERVO_POS_UNLOCKED;
-    lock_servo.write(new_pos);
+    // int new_pos = lock_door ? SERVO_POS_LOCKED : SERVO_POS_UNLOCKED;
+    // lock_servo.write(new_pos);
+    digitalWrite(DOOR_LOCK, lock_door);
 
     Serial.print(F("Setting door to "));
     String lock = lock_door ? "locked" : "unlocked";

@@ -21,11 +21,16 @@ void setup() {
     mfrc522.PCD_DumpVersionToSerial(); // Show details of PCD
 
     // Servo init
-    lock_servo.attach(DOOR_LOCK);
-    lock_servo.write(SERVO_POS_UNLOCKED); 
+    // lock_servo.attach(DOOR_LOCK_SERVO);
+    // lock_servo.write(SERVO_POS_UNLOCKED); 
 
+    // Output LEDs
+    pinMode(DOOR_LOCK, OUTPUT);
     pinMode(ALARM_OUTPUT, OUTPUT);
     pinMode(ARMED_OUTPUT, OUTPUT);
+    pinMode(LED_KEY_VALID, OUTPUT);
+
+    // Input
     pinMode(DOOR_SENSOR, INPUT_PULLUP);
 }
 
@@ -34,6 +39,7 @@ void loop() {
     // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed, INPUT_PULLUP => active LOW
 
     digitalWrite(ARMED_OUTPUT, armed);
+    digitalWrite(LED_KEY_VALID, is_valid_key);
 
     // Only read if no valid key scanned 
     if (!is_valid_key) {
@@ -48,7 +54,7 @@ void loop() {
         readKeypad();
     }
     
-    // If successful
+    // If successful then reset and change armed status
     if (is_valid_key && is_valid_code) {
         resetKeypress();
         setArmedStatus();
@@ -60,6 +66,7 @@ void loop() {
 
     delay(POLL_TIME);
 }
+
 
 void checkTimeout() {
     if (is_valid_key && millis() >= timeout) {
