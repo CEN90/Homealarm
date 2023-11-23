@@ -60,17 +60,23 @@ reactiveclass Controller(10) {
     }
 
     msgsrv lockedUser() {
-        armed = !armed;    
+        boolean internal_armed = !armed;
+        self.setArmedStatus(internal_armed);
+        // armed = !armed;    
 
         if (alarm) {
             alarm = false;
         }  
 
-        if (armed) {
+        if (internal_armed) {
             door.lockDoor();
         } else {
             door.unlockDoor();
         }
+    }
+
+    msgsrv setArmedStatus(boolean arm) {
+        armed = arm;
     }
 
     msgsrv setDoorStatus(boolean open, boolean locked) {

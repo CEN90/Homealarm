@@ -10,7 +10,6 @@ void setup() {
         pinMode(pin_input[i], INPUT);
         pinMode(pin_led[i], OUTPUT);
     }
-    
 }
 
 void loop() {
