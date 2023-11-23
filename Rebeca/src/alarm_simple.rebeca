@@ -61,8 +61,9 @@ reactiveclass Controller(10) {
 
     msgsrv lockedUser() {
         boolean internal_armed = !armed;
+
         // Because our monitor only expects an integer as param we do this workaround
-        self.setArmedStatus(internal_armed ? 1 : 0); 
+        // self.setArmedStatus(internal_armed ? 1 : 0); 
         
         // armed = !armed;    
 
@@ -72,14 +73,24 @@ reactiveclass Controller(10) {
 
         if (internal_armed) {
             door.lockDoor();
+            self.setArmed();
         } else {
             door.unlockDoor();
+            self.setUnarmed();
         }
     }
 
-    msgsrv setArmedStatus(int arm) {
-        armed = arm > 0 ? true : false;
+    msgsrv setArmed() {
+        armed = true;
     }
+
+    msgsrv setUnarmed() {
+        armed = false;
+    }
+
+    // msgsrv setArmedStatus(int arm) {
+    //     armed = arm > 0 ? true : false;
+    // }
 
     msgsrv setDoorStatus(boolean open, boolean locked) {
         door_open = open;
