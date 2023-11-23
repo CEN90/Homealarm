@@ -25,22 +25,6 @@ boolean door_lock_state = false;
 boolean key_valid_state = false;
 boolean door_sensor_state = false;
 
-// EdgeReader edgereader = EdgeReader();
-// Transitions transitions;
-
-// String state_file = "states_alarm.aut";
-// constexpr uint8_t STATES_LEN = 9;
-// String names[] = {
-//     "other",
-//     "time",
-//     "controller.alarma",
-//     "controller.setArmed",
-//     "controller.setunarmed",
-//     "door.lockDoor",
-//     "door.unlockDoor", 
-//     "door.openDoor()", 
-//     "door.closeDoor()", 
-// };
 
 void error() {
     digitalWrite(ERROR_LED, HIGH);

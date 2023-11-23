@@ -13,7 +13,7 @@ void setup() {
     // transitions = edgereader.edges;
     // next_state = edgereader.start_state;
 
-    next_state = ERROR_STATE;
+    next_state = start_state;
 }
 
 void loop() {   
@@ -29,6 +29,15 @@ void loop() {
     
     sleep = POLL_TIME;
 
+    switch (transitions[current_state][Label])
+    {
+    case controller_setcurrent:
+        /* code */
+        break;
+    
+    default:
+        break;
+    }
     
 
     delay(sleep);
