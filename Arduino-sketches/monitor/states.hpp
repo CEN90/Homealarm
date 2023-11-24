@@ -18,7 +18,7 @@ String labels_string[4] = {
     "hc_unit.setcooling",
 };
 
-int transitions[96][4] = {
+uint8_t transitions[96][4] = {
     { 0, 0, 21, 2 },
     { 0, 0, 22, 3 },
     { 0, 0, 23, 4 },
