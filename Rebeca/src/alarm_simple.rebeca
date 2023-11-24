@@ -60,12 +60,7 @@ reactiveclass Controller(10) {
     }
 
     msgsrv lockedUser() {
-        boolean internal_armed = !armed;
-
-        // Because our monitor only expects an integer as param we do this workaround
-        // self.setArmedStatus(internal_armed ? 1 : 0); 
-        
-        // armed = !armed;    
+        boolean internal_armed = !armed;   
 
         if (alarm) {
             alarm = false;
@@ -88,10 +83,6 @@ reactiveclass Controller(10) {
         armed = false;
     }
 
-    // msgsrv setArmedStatus(int arm) {
-    //     armed = arm > 0 ? true : false;
-    // }
-
     msgsrv setDoorStatus(boolean open, boolean locked) {
         door_open = open;
         door_locked = locked;
@@ -105,49 +96,6 @@ reactiveclass Controller(10) {
         alarm = true;
     }
 }
-
-// reactiveclass Authentication(5) {
-//     knownrebecs {
-//         Controller controller;
-//         User user;
-//     }
-
-//     statevars {
-//         boolean auth_key;
-//         int valid_key;
-//         int valid_code;
-//         int attempts; 
-//     }
-
-//     Authentication(int key, int code) {
-//         auth_key = false; 
-//         valid_key = key;
-//         valid_code = code;  
-//         attempts = 0;
-//     }
-
-//     msgsrv checkKey(int key) {
-//         if(key == valid_key) {
-//             auth_key = true;
-//         } else {
-//             auth_key = false; 
-//         }
-
-//         user.keyChecked(auth_key) after(AUTH_DELAY);
-//     }
-
-//     msgsrv checkCode(int code) {
-//         boolean valid = false;
-
-//         if(auth_key && code == valid_code) {
-//             controller.lockedUser();
-//             valid = true;
-//         }
-
-//         auth_key = false;
-//         user.codeChecked(valid) after(AUTH_DELAY);
-//     }
-// }
 
 reactiveclass Door(5) {
     knownrebecs {
@@ -227,7 +175,6 @@ reactiveclass BadActor(5) {
 
 reactiveclass User(5) {
     knownrebecs {
-        //Authentication auth;
         Controller controller; 
         Door door;
     }
@@ -244,8 +191,16 @@ reactiveclass User(5) {
         locked = false;
         user_delay = 0;
 
-        // self.loop() after(USER_DELAY);
-        self.enterKey(); /* after(USER_DELAY); */ // works 
+		self.start();
+    }
+    
+    msgsrv start(){
+        int path = ?(1, 0);
+        if (path == 0){
+            self.openDoor();
+        } else {
+            self.enterKey();
+        }    	
     }
 
     msgsrv enterKey() {
@@ -287,26 +242,9 @@ reactiveclass User(5) {
         door.closeDoor();
         self.enterKey() after(USER_DELAY * 5);
     }
-
-
-    // msgsrv loop() {
-    //     // send open door
-    //     door.openDoor();
-    //     delay(USER_DELAY * 10);
-        
-    //     // send close door
-    //     door.closeDoor();
-    //     delay(USER_DELAY);
-
-    //     self.enterKey();
-    //     delay(USER_DELAY);
-
-    //     self.loop() after(USER_DELAY * 10);
-    // }
 }
 
 main {
-    //Authentication authentication(controller, user):(user_key, user_door);
     User user(controller, door): (user_key, user_door);
     Controller controller(door, user):(user_key, user_door);
     BadActor intruder(door): ();

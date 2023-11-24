@@ -8,10 +8,6 @@ void setup() {
     Serial.begin(BAUD);
 
     setPins();
-    
-    // edgereader.readTransitions(state_file, names, STATES_LEN);
-    // transitions = edgereader.edges;
-    // next_state = edgereader.start_state;
 
     next_state = start_state;
 }
