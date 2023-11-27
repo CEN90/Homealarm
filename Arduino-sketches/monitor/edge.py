@@ -61,9 +61,9 @@ def replace_labels(transitions):
 
 def printer(file, start_state, total_states, total_transitions, labels, transitions):
     with open(file, 'w') as f:
-        f.write(f'int total_transitions = {total_transitions};\n')
-        f.write(f'int total_states = {total_states};\n')
-        f.write(f'int start_state = {start_state};\n\n')
+        f.write(f'constexpr uint8_t total_transitions = {total_transitions};\n')
+        f.write(f'constexpr uint8_t total_states = {total_states};\n')
+        f.write(f'constexpr uint8_t start_state = {start_state};\n\n')
 
         f.write('enum t_labels { From, Label, Value, To };\n\n')
 
@@ -85,10 +85,8 @@ def printer(file, start_state, total_states, total_transitions, labels, transiti
 
 
 file = './Rebeca/src/alarm_states.aut'
-start_state, total_states, total_transitions, transitions = parse_aut_file(file)
-print(f'Start state: {start_state}, Total states: {total_states}, Total transitions: {total_transitions}')
-
-labels, new_transitions = replace_labels(transitions)
-
 file_out = os.path.dirname(__file__) +'/states.hpp'
+
+start_state, total_states, total_transitions, transitions = parse_aut_file(file)
+labels, new_transitions = replace_labels(transitions)
 printer(file_out, start_state, total_states, total_transitions, labels, new_transitions)

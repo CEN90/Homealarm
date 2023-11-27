@@ -9,7 +9,6 @@ env int BREAKIN_DELAY = 30;
 
 reactiveclass Controller(10) {
     knownrebecs {
-        //Authentication auth;
         Door door;
         User user;
     }

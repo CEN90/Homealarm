@@ -1,8 +1,8 @@
 #include "monitor.hpp"
 
-int current_state = 0;
-int next_state = 0;
-int sleep = 0;
+uint8_t current_state = 0;
+uint8_t next_state = 0;
+uint8_t sleep = 0;
 
 void setup() {
     Serial.begin(BAUD);

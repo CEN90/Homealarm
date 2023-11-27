@@ -1,6 +1,6 @@
-int total_transitions = 72;
-int total_states = 95;
-int start_state = 0;
+constexpr uint8_t total_transitions = 72;
+constexpr uint8_t total_states = 95;
+constexpr uint8_t start_state = 0;
 
 enum t_labels { From, Label, Value, To };
 
