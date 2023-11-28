@@ -19,7 +19,8 @@ reactiveclass Controller(10) {
         boolean door_open;
 
         //authentication variables 
-        boolean  auth_key;
+        boolean auth_key;
+        boolean key_valid;
         int valid_key; 
         int valid_code;
         int attemps; 
@@ -30,6 +31,7 @@ reactiveclass Controller(10) {
         alarm = false;
         door_locked = false; 
         door_open = false;
+        key_valid = false;
 
         auth_key = false;
         valid_key = key;
@@ -40,9 +42,11 @@ reactiveclass Controller(10) {
     msgsrv checkKey(int key) {
         if(key == valid_key) {
             auth_key = true; 
+            self.setKeyValid();
         } else {
             auth_key = false; 
         }
+
         user.keyChecked(auth_key) after(AUTH_DELAY);
     }
 
@@ -72,6 +76,16 @@ reactiveclass Controller(10) {
             door.unlockDoor();
             self.setUnarmed();
         }
+    }
+
+    msgsrv setKeyValid() {
+        key_valid = true;
+        delay(10000);
+        self.setKeyInvalid();
+    }
+
+    msgsrv setKeyInvalid() {
+        key_valid = false;
     }
 
     msgsrv setArmed() {

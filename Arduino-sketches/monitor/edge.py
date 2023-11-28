@@ -61,9 +61,9 @@ def replace_labels(transitions):
 
 def printer(file, start_state, total_states, total_transitions, labels, transitions):
     with open(file, 'w') as f:
-        f.write(f'constexpr uint8_t total_transitions = {total_transitions};\n')
-        f.write(f'constexpr uint8_t total_states = {total_states};\n')
-        f.write(f'constexpr uint8_t start_state = {start_state};\n\n')
+        f.write(f'constexpr int total_transitions = {total_transitions};\n')
+        f.write(f'constexpr int total_states = {total_states};\n')
+        f.write(f'constexpr int start_state = {start_state};\n\n')
 
         f.write('enum t_labels { From, Label, Value, To };\n\n')
 
@@ -77,7 +77,7 @@ def printer(file, start_state, total_states, total_transitions, labels, transiti
         for l in labels:
             f.write(f'    \"{l}\",\n')
         f.write('};\n\n')
-        f.write(f'uint8_t transitions[{total_states + 1}][4] = ' + '{\n')
+        f.write(f'int transitions[{total_states + 1}][4] = ' + '{\n')
         for t in transitions:
             line = '    { ' + str(t[0]) + ', ' + str(t[1]) + ', ' + str(t[2]) + ', ' + str(t[3]) + ' },\n'
             f.write(line)
