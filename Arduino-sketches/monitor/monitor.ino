@@ -5,6 +5,7 @@ int next_state = 0;
 int sleep = POLL_TIME;
 
 boolean error_state = false;
+boolean check_door_next = false;
 
 int states_len, startpos, endpos;
 
@@ -21,11 +22,13 @@ void loop() {
     updateLEDs(); // To make it easier to follow
 
     // Do nothing if pin states is same
-    if (comparePinStates()) {
+    if (comparePinStates() && !check_door_next) {
         delay(sleep);
         return;
     }
     
+    check_door_next = false;
+
     for (auto &&i : current_input_states) {
         Serial << i << ' ';
     }
@@ -40,7 +43,6 @@ void loop() {
     current_state = next_state;
 
     states_len = findState(current_state, &startpos, &endpos);
-
     error_state = states_len == ERROR_STATE; // Do nothing if error
 
     if (!error_state) {
@@ -51,19 +53,6 @@ void loop() {
     }
     
     delay(sleep);
-}
-
-void printPossibleChoices(int start, int len) {
-    int s = transitions[current_state][Label];
-    Serial << "Current state:" << " " << labels_string[s] << " -> " << current_state << '\n';
-    Serial << "Possible next choices: ";
-
-    for (size_t i = 0; i < len; i++) {
-        int s = transitions[start + i][Label];
-        Serial << labels_string[s] << ", ";
-    }
-    
-    Serial << '\n';
 }
 
 void stateSwitch(int states_len, int startpos) {
@@ -107,7 +96,13 @@ void stateSwitch(int states_len, int startpos) {
                 break;
 
             case controller_setdoorstatus:
-                /* code */
+                Serial << "door_status " << door_status << "\n";
+                if (transitions[startpos + i][Value] == door_status)
+                {
+                    n_state = transitions[startpos + i][To];
+                    Serial.println(F("Door status changed"));
+                }
+                
                 break;
 
             case controller_setunarmed:
@@ -127,11 +122,29 @@ void stateSwitch(int states_len, int startpos) {
             default:
                 break;
         }
+
+        if (n_state != ERROR_STATE) {
+            break;
+        }
+        
     }
 
     if (n_state == ERROR_STATE) {
         error_state = true;
     }
-    
-    next_state = n_state; 
+
+    int next_start, next_end;
+    findState(n_state, &next_start, &next_end);
+    if (transitions[next_start][Label] == controller_setdoorstatus) {
+        check_door_next = true;
+        Serial.println("Checking door next");
+    }
+
+    next_state = n_state;  
+}
+
+void printPossibleChoices(int start, int len) {
+    int s = transitions[start][Label];
+    // int s = transitions[current_state][Label];
+    Serial << "Current state:" << " " << current_state << " -> " << labels_string[s] << "\n";   
 }

@@ -36,12 +36,21 @@ enum input_states {
     DOOR_SENSOR_STATE
 };
 
+enum door_status {
+    CLOSED_UNLOCKED,
+    CLOSER_LOCKED,
+    OPEN_UNLOCKED,
+    OPEN_LOCKED // Can't happen!
+};
+int door_status = CLOSED_UNLOCKED;
+
 void error(int current_state) {
     int s = transitions[current_state][Label];
     
     Serial.println(F("Something went wrong!"));
     Serial.print(F("Previous state: "));
-    Serial.println(labels_string[s] + '\n');
+    Serial.println(current_state + '\n');
+    // Serial.println(labels_string[s] + '\n');
     
     digitalWrite(ERROR_LED, HIGH);
 }
@@ -69,13 +78,27 @@ void readPinStates() {
     current_input_states[DOOR_LOCK_STATE] = digitalRead(DOOR_LOCK_IN);
     current_input_states[KEY_VALID_STATE] = digitalRead(KEY_VALID_IN);
     current_input_states[DOOR_SENSOR_STATE] = digitalRead(DOOR_SENSOR_IN);
+
+    door_status = CLOSED_UNLOCKED;
+    if (!current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
+        door_status = CLOSER_LOCKED;
+    
+    if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
+        door_status = OPEN_UNLOCKED;
+    
+    if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
+        door_status = OPEN_UNLOCKED;
+    
+    if (current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
+        door_status = OPEN_LOCKED;
+    
 }
 
 boolean comparePinStates() {
     auto cmp = true;
 
     for (size_t i = 0; i < input_states_len; i++) {
-        if (current_input_states[i] != prev_input_states[i]) {
+        if (current_input_states[i] != prev_input_states[i] && i != KEY_VALID_STATE) {
             cmp = false;
         }
 

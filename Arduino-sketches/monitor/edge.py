@@ -24,10 +24,16 @@ def parse_aut_file(file_path):
                     value_str = match.group(3)
                     if value_str.isdigit():
                         value = int(value_str)
-                    elif value_str.lower() == 'true':
-                        value = 1
-                    elif value_str.lower() == 'false':
-                        value = 0
+                    elif ',' in value_str:
+                        bool_values = value_str.split(', ')
+                        if bool_values[0].lower() == 'false' and bool_values[1].lower() == 'false':
+                            value = 0
+                        elif bool_values[0].lower() == 'false' and bool_values[1].lower() == 'true':
+                            value = 1
+                        elif bool_values[0].lower() == 'true' and bool_values[1].lower() == 'false':
+                            value = 2
+                        elif bool_values[0].lower() == 'true' and bool_values[1].lower() == 'true':
+                            value = 3
                     else: # If unexpected then don't handle it, monitor can ignore it
                         value = -1
                     to_state = int(match.group(4))
@@ -43,6 +49,49 @@ def parse_aut_file(file_path):
                         transitions.append((from_state, label, value, to_state))
 
     return start_state, total_states, total_transitions, transitions
+
+# def parse_aut_file(file_path):
+#     transitions = []
+#     start_state = total_states = total_transitions = None
+
+#     # Open the file in read mode
+#     with open(file_path, 'r') as file:
+#         for line in file:
+#             # If the line starts with 'des', it contains the start state, total states, and total transitions
+#             if line.startswith('des'):
+#                 match = re.match(r'des \((\d+),(\d+),(\d+)\)', line.strip())
+#                 if match:
+#                     start_state = int(match.group(1))
+#                     total_states = int(match.group(2))
+#                     total_transitions = int(match.group(3))
+#             else:
+#                 # If the line doesn't start with 'des', it contains a transition
+#                 match = re.match(r'\((\d+),"([^"]+)\[(.*?)\]\.\[\]",(\d+)\)', line.strip())
+#                 if match:
+#                     from_state = int(match.group(1))
+#                     label = match.group(2)
+#                     value_str = match.group(3)
+#                     if value_str.isdigit():
+#                         value = int(value_str)
+#                     elif value_str.lower() == 'true':
+#                         value = 1
+#                     elif value_str.lower() == 'false':
+#                         value = 0
+#                     else: # If unexpected then don't handle it, monitor can ignore it
+#                         value = -1
+#                     to_state = int(match.group(4))
+#                     transitions.append((from_state, label, value, to_state))
+#                 else:
+#                     # First regex won't match against time +=<int>
+#                     match = re.match(r'\((\d+),"([^"]+) \+=([0-9]+)",(\d+)\)', line.strip())
+#                     if match:
+#                         from_state = int(match.group(1))
+#                         label = match.group(2)
+#                         value = int(match.group(3))
+#                         to_state = int(match.group(4))
+#                         transitions.append((from_state, label, value, to_state))
+
+#     return start_state, total_states, total_transitions, transitions
 
 def replace_labels(transitions):
     label_to_int = {}
