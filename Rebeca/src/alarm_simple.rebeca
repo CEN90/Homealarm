@@ -225,8 +225,8 @@ reactiveclass User(5) {
 
     msgsrv enterKey() {
         //USER_DELAY = ?(10,15);
-        user_delay = ?(10, 15);
-        controller.checkKey(key) after(user_delay);
+        //user_delay = ?(10, 15);
+        controller.checkKey(key) after(USER_DELAY);
     }
 
     msgsrv keyChecked(boolean valid) {
