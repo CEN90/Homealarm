@@ -80,7 +80,7 @@ reactiveclass Controller(10) {
 
     msgsrv setKeyValid() {
         key_valid = true;
-        delay(10000);
+        delay(10);
         self.setKeyInvalid();
     }
 
@@ -174,7 +174,14 @@ reactiveclass BadActor(5) {
     statevars { }
 
     BadActor() {
-        self.spyingDoor(false) after(BREAKIN_DELAY);
+        self.maeby();
+    }
+    
+    msgsrv maeby(){
+    	int career_path = ?(1, 0);
+        if(career_path == 1) {
+            self.spyingDoor(false) after(BREAKIN_DELAY);
+        }
     }
 
     msgsrv spyingDoor(boolean locked) {
