@@ -28,8 +28,8 @@ void loop() {
     }
     
     check_door_next = false;
-
-    for (auto &&i : current_input_states) {
+    
+    for (auto &&i : current_input_states) { // Simple debug output
         Serial << i << ' ';
     }
     Serial << '\n';
@@ -45,7 +45,7 @@ void loop() {
     states_len = findState(current_state, &startpos, &endpos);
     error_state = states_len == ERROR_STATE; // Do nothing if error
 
-    if (!error_state) {
+    if (!error_state) { // Also debug output
         printPossibleChoices(startpos, states_len);
         Serial << "startpos: " << startpos << " endpos: " << endpos << '\n';
         stateSwitch(states_len, startpos);
@@ -123,19 +123,18 @@ void stateSwitch(int states_len, int startpos) {
                 break;
         }
 
-        if (n_state != ERROR_STATE) {
+        if (n_state != ERROR_STATE) { // If a match was found then go with it
             break;
         }
-        
     }
 
-    if (n_state == ERROR_STATE) {
+    if (n_state == ERROR_STATE) { // We want to stop loop if encounter error
         error_state = true;
     }
 
     int next_start, next_end;
-    findState(n_state, &next_start, &next_end);
-    if (transitions[next_start][Label] == controller_setdoorstatus) {
+    findState(n_state, &next_start, &next_end); // Translate a state id to its index in transisions array
+    if (transitions[next_start][Label] == controller_setdoorstatus) { // Treating setdoorstatus as a tau
         check_door_next = true;
         Serial.println("Checking door next");
     }
