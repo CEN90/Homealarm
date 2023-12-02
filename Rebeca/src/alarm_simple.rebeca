@@ -70,10 +70,8 @@ reactiveclass Controller(10) {
         }  
 
         if (internal_armed) {
-            door.lockDoor();
             self.setArmed();
         } else {
-            door.unlockDoor();
             self.setUnarmed();
         }
     }
@@ -90,10 +88,12 @@ reactiveclass Controller(10) {
 
     msgsrv setArmed() {
         armed = true;
+        door.lockDoor();
     }
 
     msgsrv setUnarmed() {
         armed = false;
+        door.unlockDoor();
     }
 
     msgsrv setDoorStatus(boolean open, boolean locked) {
@@ -225,8 +225,8 @@ reactiveclass User(5) {
 
     msgsrv enterKey() {
         //USER_DELAY = ?(10,15);
-        //user_delay = ?(10, 15);
-        controller.checkKey(key) after(USER_DELAY);
+        user_delay = ?(3,8,10);
+        controller.checkKey(key) after(user_delay);
     }
 
     msgsrv keyChecked(boolean valid) {
