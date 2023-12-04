@@ -41,7 +41,8 @@ build/*
 .project
 
 # Afra
-*.cpp
+# *.cpp
+Rebeca/out/*/*.cpp
 *.h
 
 # ta bort innan publicering
