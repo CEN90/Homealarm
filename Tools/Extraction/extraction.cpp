@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
     if(argc != 5) {
-        std::cout << "Usage: ./program <input_aut> <output_aut> [-s <observable_states_file> | observable_states]\n";
+        std::cout << "Usage: ./program <input aut> <output txt> [-s <observable_states_file> | observable_states]\n";
         return 1;
     }
 

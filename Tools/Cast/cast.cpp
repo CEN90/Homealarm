@@ -18,26 +18,26 @@ int main (int argc, char *argv[]) {
 	int index = -1;
 
 
-    std::cout << "Loading a state transition system (LTS)!" << '\n';
+    // std::cout << "Loading a state transition system (LTS)!" << '\n';
 	std::string stateVar = "<variable";
 	std::vector<std::string> transitions;
 	std::vector<std::string> vars;
 	
 	std::ifstream readFile;
-	std::ofstream writeFile;
-	std::ofstream writeAutFile;
+	// std::ofstream writeFile;
+	// std::ofstream writeAutFile;
 
-	std::string filename, outfile;
+	std::string filename;
+	// std::string outfile;
 
-	if (argc < 3) {
-		std::cout << "Usage: cast <in file> <out file>" << std::endl;
+	if (argc < 2) {
+		std::cout << "Usage: cast <statespace>" << std::endl;
 		
 	} else {
 		filename = argv[1];
-		outfile = argv[2];
+		// outfile = argv[2];
 	}
 	
-
 	readFile.open(filename);
 	if (!readFile.is_open()) {
 		exit(EXIT_FAILURE);
@@ -353,20 +353,21 @@ int main (int argc, char *argv[]) {
 	}
 		
 	//print out the state transition system with time shift transitions
-	writeFile.open(outfile, std::ofstream::out | std::ofstream::trunc);
-	std::cout << "NUBMER OF STATES: " << state_Id.size() << " NUBMER OF TRANSITIONS: " << transitions.size() +  cntShift <<"\n";
-	writeFile << "des (0, " << transitions.size() +  cntShift << ", " << state_Id.size() << ")" <<'\n';
+	// writeFile.open(outfile, std::ofstream::out | std::ofstream::trunc);
+	// std::cout << "NUBMER OF STATES: " << state_Id.size() << " NUBMER OF TRANSITIONS: " << transitions.size() +  cntShift <<"\n";
+	std::cout << "des (0, " << transitions.size() +  cntShift << ", " << state_Id.size() << ")" <<'\n';
+	// writeFile << "des (0, " << transitions.size() +  cntShift << ", " << state_Id.size() << ")" <<'\n';
 	for(int i = 0; i < state_Id.size(); i++){
 		std::cout << "("<<  stoi(state_Id[i])-1 << ",\"";
-		writeFile << "("<<  stoi(state_Id[i])-1 << ",\"";
+		// writeFile << "("<<  stoi(state_Id[i])-1 << ",\"";
 		for(int j = 0 ; j < edges[i].size(); j++) {
 			if(j>0) {
 				std::cout << "("<< stoi(state_Id[i])-1 << ",\"" << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
-				writeFile << "("<< stoi(state_Id[i])-1 << ",\"" << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
+				// writeFile << "("<< stoi(state_Id[i])-1 << ",\"" << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
 				stateId.push_back(state_Id[i]);
 			} else {
 				std::cout << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
-				writeFile << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
+				// writeFile << labels[i][j] << "\"," <<  stoi(edges[i][j])-1 << ")"<< '\n';
 				stateId.push_back(state_Id[i]);
 			}
 		}

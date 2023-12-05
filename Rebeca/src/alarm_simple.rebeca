@@ -19,7 +19,6 @@ reactiveclass Controller(10) {
         boolean door_open;
 
         //authentication variables 
-        boolean auth_key;
         boolean key_valid;
         boolean code_valid;
         int valid_key; 
@@ -35,64 +34,53 @@ reactiveclass Controller(10) {
         key_valid = false;
         code_valid = false;
 
-        auth_key = false;
         valid_key = key;
         valid_code = code; 
         attemps = 0;
     }
 
     msgsrv checkKey(int key) {
+        boolean is_valid = false;
+
         if(key == valid_key) {
-            auth_key = true; 
-            self.setKeyValid(0);
-        } else {
-            auth_key = false; 
+            self.setKeyValid();
+            is_valid = true;
         }
 
-        user.keyChecked(auth_key) after(AUTH_DELAY);
+        user.keyChecked(is_valid) after(AUTH_DELAY);
     }
 
     msgsrv checkCode(int code) {
-        // boolean valid = false; 
-
-        if(auth_key && code == valid_code) {
-            self.lockedUser();
-            // valid = true; 
+        if(code_valid && code == valid_code) {
             code_valid = true; 
+            self.lockedUser();
         }
 
-        auth_key = false;
         user.codeChecked(code_valid) after(AUTH_DELAY);
-        // user.codeChecked(valid) after(AUTH_DELAY);
+        self.setKeyInvalid();
     }
 
     msgsrv lockedUser() {
-        boolean internal_armed = !armed;   
+        alarm = false;
 
-        if (alarm) {
-            alarm = false;
-        }  
-
-        if (internal_armed) {
-            self.setArmed();
-        } else {
+        if (armed) {
             self.setUnarmed();
+        } else {
+            self.setArmed();
         }
     }
 
-    msgsrv setKeyValid(int count) {
+    msgsrv setKeyValid() {
         key_valid = true;
 
-        if (count < 1 && !code_valid) {
-            self.setKeyValid(count + 1) after(AUTH_DELAY);
-        } else {
-            self.setKeyInvalid();
-        }
+        self.setKeyInvalid() after(10);
     }
 
     msgsrv setKeyInvalid() {
-        key_valid = false;
-        code_valid = false;
+        if (key_valid || code_valid) {
+            key_valid = false;
+            code_valid = false;
+        }
     }
 
     msgsrv setArmed() {
