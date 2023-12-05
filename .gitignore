@@ -43,6 +43,7 @@ build/*
 # Afra
 # *.cpp
 Rebeca/out/*/*.cpp
+Rebeca/out/*/*.txt
 *.h
 
 # ta bort innan publicering
@@ -61,7 +62,7 @@ LF/lib64/*
 .lf-cpp-marker
 *.xml
 *.json
-*.txt
+LR/*/*.txt
 
 CMakeLists.txt
 
