@@ -22,8 +22,8 @@ fi
 
 
 # Get the file name and extension
-FILE=$1
-FILEPATH="$(realpath -L $1)"
+FILE="$(realpath -L $1)"
+# FILEPATH="$(realpath -L $1)"
 EXTENSION="${FILE##*.}"
 FILENAME="${FILE%.*}"
 
@@ -36,6 +36,7 @@ fi
 # Path to helper programs
 CAST=$(realpath -L "Cast/cast")
 EXTRACTION=$(realpath -L "Extraction/extraction")
+REDUCE=$(realpath -L "./reduce.sh")
 
 AUTFILE="$(basename $FILENAME).aut"
 
@@ -55,3 +56,10 @@ fi
 
 # Extraction
 $EXTRACTION $OUTLOCATION$AUTFILE $TAU -s $OBSERVABLE
+TESTEXTRACTION=$(wc -w <<< "$TAU")
+if [ $TESTEXTRACTION -eq 0 ]; then
+    echo "Something went wrong during extraction"
+fi
+
+# Reduce using convert.sh
+$REDUCE $OUTLOCATION$AUTFILE
