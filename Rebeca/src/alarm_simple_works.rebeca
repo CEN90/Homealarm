@@ -1,11 +1,11 @@
-//env int doorSensor_id = 1; 
+env int doorSensor_id = 1; 
 env int user_key = 2;
 env int user_door = 3; 
 
-env int DOOR_DELAY = 2;
+env int DOOR_DELAY = 5;
 env int USER_DELAY = 10;
-//env int AUTH_DELAY = 1;
-env int BREAKIN_DELAY = 10;
+env int AUTH_DELAY = 10;
+env int BREAKIN_DELAY = 30;
 
 reactiveclass Controller(10) {
     knownrebecs {
@@ -19,8 +19,8 @@ reactiveclass Controller(10) {
         boolean door_open;
 
         //authentication variables 
+        boolean auth_key;
         boolean key_valid;
-        boolean code_valid;
         int valid_key; 
         int valid_code;
         int attemps; 
@@ -32,55 +32,58 @@ reactiveclass Controller(10) {
         door_locked = false; 
         door_open = false;
         key_valid = false;
-        code_valid = false;
 
+        auth_key = false;
         valid_key = key;
         valid_code = code; 
         attemps = 0;
     }
 
     msgsrv checkKey(int key) {
-        boolean is_valid = false;
-
         if(key == valid_key) {
+            auth_key = true; 
             self.setKeyValid();
-            is_valid = true;
+        } else {
+            auth_key = false; 
         }
 
-        user.keyChecked(is_valid); // after(AUTH_DELAY);
+        user.keyChecked(auth_key) after(AUTH_DELAY);
     }
 
     msgsrv checkCode(int code) {
-        if(code_valid && code == valid_code) {
-            code_valid = true; 
+        boolean valid = false; 
+
+        if(auth_key && code == valid_code) {
             self.lockedUser();
+            valid = true; 
         }
 
-        user.codeChecked(code_valid);// after(AUTH_DELAY);
-        self.setKeyInvalid();
+        auth_key = false;
+        user.codeChecked(valid) after(AUTH_DELAY);
     }
 
     msgsrv lockedUser() {
-        alarm = false;
+        boolean internal_armed = !armed;   
 
-        if (armed) {
-            self.setUnarmed();
-        } else {
+        if (alarm) {
+            alarm = false;
+        }  
+
+        if (internal_armed) {
             self.setArmed();
+        } else {
+            self.setUnarmed();
         }
     }
 
     msgsrv setKeyValid() {
         key_valid = true;
-
-        self.setKeyInvalid() after(10);
+        delay(10);
+        self.setKeyInvalid();
     }
 
     msgsrv setKeyInvalid() {
-        if (key_valid || code_valid) {
-            key_valid = false;
-            code_valid = false;
-        }
+        key_valid = false;
     }
 
     msgsrv setArmed() {
@@ -221,7 +224,8 @@ reactiveclass User(5) {
     }
 
     msgsrv enterKey() {
-        user_delay = ?(10,15);
+        //USER_DELAY = ?(10,15);
+        user_delay = ?(3,8,10);
         controller.checkKey(key) after(user_delay);
     }
 
