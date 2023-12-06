@@ -4,8 +4,8 @@ env int user_door = 3;
 
 env int DOOR_DELAY = 2;
 env int USER_DELAY = 10;
-//env int AUTH_DELAY = 1;
-env int BREAKIN_DELAY = 10;
+env int AUTH_DELAY = 1;
+env int BREAKIN_DELAY = 30;
 
 reactiveclass Controller(10) {
     knownrebecs {
@@ -19,8 +19,8 @@ reactiveclass Controller(10) {
         boolean door_open;
 
         //authentication variables 
+        boolean auth_key;
         boolean key_valid;
-        boolean code_valid;
         int valid_key; 
         int valid_code;
         int attemps; 
@@ -32,55 +32,58 @@ reactiveclass Controller(10) {
         door_locked = false; 
         door_open = false;
         key_valid = false;
-        code_valid = false;
 
+        auth_key = false;
         valid_key = key;
         valid_code = code; 
         attemps = 0;
     }
 
     msgsrv checkKey(int key) {
-        boolean is_valid = false;
-
         if(key == valid_key) {
+            auth_key = true; 
             self.setKeyValid();
-            is_valid = true;
+        } else {
+            auth_key = false; 
         }
 
-        user.keyChecked(is_valid); // after(AUTH_DELAY);
+        user.keyChecked(auth_key) after(AUTH_DELAY);
     }
 
     msgsrv checkCode(int code) {
-        if(code_valid && code == valid_code) {
-            code_valid = true; 
+        boolean valid = false; 
+
+        if(auth_key && code == valid_code) {
             self.lockedUser();
+            valid = true; 
         }
 
-        user.codeChecked(code_valid);// after(AUTH_DELAY);
-        self.setKeyInvalid();
+        auth_key = false;
+        user.codeChecked(valid) after(AUTH_DELAY);
     }
 
     msgsrv lockedUser() {
-        alarm = false;
+        boolean internal_armed = !armed;   
 
-        if (armed) {
-            self.setUnarmed();
-        } else {
+        if (alarm) {
+            alarm = false;
+        }  
+
+        if (internal_armed) {
             self.setArmed();
+        } else {
+            self.setUnarmed();
         }
     }
 
     msgsrv setKeyValid() {
         key_valid = true;
-
-        self.setKeyInvalid() after(10);
+        delay(10);
+        self.setKeyInvalid();
     }
 
     msgsrv setKeyInvalid() {
-        if (key_valid || code_valid) {
-            key_valid = false;
-            code_valid = false;
-        }
+        key_valid = false;
     }
 
     msgsrv setArmed() {
@@ -106,6 +109,106 @@ reactiveclass Controller(10) {
         alarm = true;
     }
 }
+
+// reactiveclass Controller(10) {
+//     knownrebecs {
+//         Door door;
+//         User user;
+//     }
+//     statevars {
+//         boolean armed; 
+//         boolean alarm; 
+//         boolean door_locked;
+//         boolean door_open;
+
+//         //authentication variables 
+//         boolean key_valid;
+//         boolean code_valid;
+//         int valid_key; 
+//         int valid_code;
+//         int attemps; 
+//     }
+
+//     Controller(int key, int code) {
+//         armed = false;
+//         alarm = false;
+//         door_locked = false; 
+//         door_open = false;
+//         key_valid = false;
+//         code_valid = false;
+
+//         valid_key = key;
+//         valid_code = code; 
+//         attemps = 0;
+//     }
+
+//     msgsrv checkKey(int key) {
+//         boolean is_valid = false;
+
+//         if(key == valid_key) {
+//             self.setKeyValid();
+//             is_valid = true;
+//         }
+
+//         user.keyChecked(is_valid); // after(AUTH_DELAY);
+//     }
+
+//     msgsrv checkCode(int code) {
+//         if(code_valid && code == valid_code) {
+//             code_valid = true; 
+//             self.lockedUser();
+//         }
+
+//         user.codeChecked(code_valid);// after(AUTH_DELAY);
+//         self.setKeyInvalid();
+//     }
+
+//     msgsrv lockedUser() {
+//         alarm = false;
+
+//         if (armed) {
+//             self.setUnarmed();
+//         } else {
+//             self.setArmed();
+//         }
+//     }
+
+//     msgsrv setKeyValid() {
+//         key_valid = true;
+
+//         self.setKeyInvalid() after(10);
+//     }
+
+//     msgsrv setKeyInvalid() {
+//         if (key_valid || code_valid) {
+//             key_valid = false;
+//             code_valid = false;
+//         }
+//     }
+
+//     msgsrv setArmed() {
+//         armed = true;
+//         door.lockDoor();
+//     }
+
+//     msgsrv setUnarmed() {
+//         armed = false;
+//         door.unlockDoor();
+//     }
+
+//     msgsrv setDoorStatus(boolean open, boolean locked) {
+//         door_open = open;
+//         door_locked = locked;
+
+//         if (armed && door_open) {
+//             self.alarma();
+//         }
+//     }
+
+//     msgsrv alarma() {
+//         alarm = true;
+//     }
+// }
 
 reactiveclass Door(5) {
     knownrebecs {
@@ -239,9 +342,9 @@ reactiveclass User(5) {
         }
 
         if (locked) {
-            self.openDoor() after(USER_DELAY * 2);
+            self.openDoor() after(USER_DELAY);
         } else {
-            self.enterKey() after(USER_DELAY * 2);
+            self.enterKey() after(USER_DELAY);
         }
     }
 
@@ -251,12 +354,13 @@ reactiveclass User(5) {
 
     msgsrv openDoor() {
         door.openDoor();
-        self.closeDoor() after(USER_DELAY * 2);
+        self.closeDoor() after(USER_DELAY);
     }
 
     msgsrv closeDoor() {
         door.closeDoor();
-        self.enterKey() after(USER_DELAY * 5);
+        self.start() after(USER_DELAY);
+        // self.enterKey() after(USER_DELAY);
     }
 }
 
