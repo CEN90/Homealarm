@@ -48,7 +48,8 @@ Rebeca/out/*/*.txt
 
 # ta bort innan publicering
 *.statespace
-
+Rebeca/statespaces/*.dot
+Rebeca/statespaces/*.pdf
 
 # LF
 LF/bin/*
