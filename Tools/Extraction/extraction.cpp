@@ -1,3 +1,11 @@
+/*
+	Code is from Fereidoun Moradis repo extraction_Function
+	https://github.com/fereidoun-moradi/extraction_Function
+
+	Changes have been to make it run as a stand-alone C++-program and reading in 
+    the observable states from a given file instead of input in terminal.
+*/
+
 #include <fstream>
 #include <vector>
 #include <string>

@@ -1,3 +1,11 @@
+/*
+	Code is from Fereidoun Moradis repo cast_function
+	https://github.com/fereidoun-moradi/cast_function 
+
+	Changes have been made to make it run as a stand-alone C++-program and
+	 making it take in a .statespace-file as argument so it could be scripted.
+*/
+
 #include <fstream>
 #include <vector>
 #include <string>
