@@ -5,7 +5,7 @@ int next_state = 0;
 int sleep = POLL_TIME;
 
 boolean error_state = false;
-boolean check_door_next = false;
+boolean tau_transition_next = false;
 
 int states_len, startpos, endpos;
 
@@ -22,12 +22,12 @@ void loop() {
     updateLEDs(); // To make it easier to follow
 
     // Do nothing if pin states is same
-    if (comparePinStates() && !check_door_next) {
+    if (comparePinStates() && !tau_transition_next) {
         delay(sleep);
         return;
     }
     
-    check_door_next = false;
+    tau_transition_next = false;
     
     for (auto &&i : current_input_states) { // Simple debug output
         Serial << i << ' ';
@@ -40,6 +40,7 @@ void loop() {
         return;
     }
 
+    sleep = POLL_TIME;
     current_state = next_state;
 
     states_len = findState(current_state, &startpos, &endpos);
@@ -48,14 +49,14 @@ void loop() {
     if (!error_state) { // Also debug output
         printPossibleChoices(startpos, states_len);
         Serial << "startpos: " << startpos << " endpos: " << endpos << '\n';
-        stateSwitch(states_len, startpos);
+        stateSwitch(states_len, startpos, &sleep);
         Serial << '\n';
     }
     
     delay(sleep);
 }
 
-void stateSwitch(int states_len, int startpos) {
+void stateSwitch(int states_len, int startpos, int* sleep) {
     int n_state = ERROR_STATE; // Gets replaced if a good state found
 
     for (size_t i = 0; i < states_len; i++) {
@@ -118,6 +119,27 @@ void stateSwitch(int states_len, int startpos) {
                     Serial.println(F("ALARMA!"));
                 }
                 break;
+
+            case time:
+                *sleep = transitions[startpos + i][Value] * 1000;
+                Serial << "Time encountered, " << *sleep << "\n";
+                n_state = transitions[startpos + i][To];
+                tau_transition_next = true;
+                break;
+
+            case controller_setkeyvalid:
+                if (current_input_states[KEY_VALID_STATE]) {
+                    n_state = transitions[startpos + i][To];
+                    Serial.println(F("Valid key read"));
+                }
+                break;
+
+            case controller_setkeyinvalid:
+                if (!current_input_states[KEY_VALID_STATE]) {
+                    n_state = transitions[startpos + i][To];
+                    Serial.println(F("Valid key read timeout"));
+                }
+                break;
             
             default:
                 break;
@@ -134,16 +156,25 @@ void stateSwitch(int states_len, int startpos) {
 
     int next_start, next_end;
     findState(n_state, &next_start, &next_end); // Translate a state id to its index in transisions array
-    if (transitions[next_start][Label] == controller_setdoorstatus) { // Treating setdoorstatus as a tau
-        check_door_next = true;
-        Serial.println("Checking door next");
+
+    if (
+        transitions[next_start][Label] == controller_setdoorstatus || 
+        transitions[next_start][Label] == time
+    ) { // Treating setdoorstatus as a tau
+        tau_transition_next = true;
+        Serial.println("Tau transition next");
     }
 
     next_state = n_state;  
 }
 
-void printPossibleChoices(int start, int len) {
-    int s = transitions[start][Label];
-    // int s = transitions[current_state][Label];
-    Serial << "Current state:" << " " << current_state << " -> " << labels_string[s] << "\n";   
+void printPossibleChoices(int start, int len) { 
+    Serial << "Current state:" << " " << current_state << ", possible labels -> ";   
+
+    for (size_t i = 0; i < len; i++) {
+        int s = transitions[start + i][Label];
+        Serial << labels_string[s] << " ";
+    }
+    
+    Serial.println("");
 }

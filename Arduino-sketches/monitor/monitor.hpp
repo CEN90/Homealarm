@@ -2,21 +2,43 @@
 
 #define BAUD  115200
 
-constexpr int ALARM_IN = 13;
-constexpr int ARMED_IN = 12;
-constexpr int DOOR_LOCK_IN = 11;
-constexpr int KEY_VALID_IN = 10;
-constexpr int DOOR_SENSOR_IN = 9;
+// Input Arduino Uno
+// constexpr int ALARM_IN = 13;
+// constexpr int ARMED_IN = 12;
+// constexpr int DOOR_LOCK_IN = 11;
+// constexpr int KEY_VALID_IN = 10;
+// constexpr int DOOR_SENSOR_IN = 9;
 
+// Output Arduino Uno pinout
+// constexpr int ALARM_OUT = PIN7;
+// constexpr int ARMED_OUT = PIN6;
+// constexpr int DOOR_LOCK_OUT = PIN5;
+// constexpr int KEY_VALID_OUT = PIN4;
+// constexpr int DOOR_SENSOR_OUT = PIN3;
+
+// Input Arduino Mega pinout
+constexpr int ALARM_IN = PIN4;
+constexpr int ARMED_IN = PIN3;
+constexpr int DOOR_LOCK_IN = PIN2;
+constexpr int KEY_VALID_IN = 50;
+constexpr int DOOR_SENSOR_IN = 51;
+
+// Output Arduino Uno pinout
 constexpr int ALARM_OUT = PIN7;
 constexpr int ARMED_OUT = PIN6;
 constexpr int DOOR_LOCK_OUT = PIN5;
 constexpr int KEY_VALID_OUT = PIN4;
 constexpr int DOOR_SENSOR_OUT = PIN3;
 
+// Output config
+constexpr int ERROR_LED_PRESENT = 0;
+constexpr int OUTPUT_PRESENT = 0;
+
+// Error output
 constexpr int ERROR_STATE = -1;
 constexpr int ERROR_LED = PIN2;
 constexpr int POLL_TIME = 10;
+
 
 boolean alarm_state = false;
 boolean armed_state = false;
@@ -52,7 +74,10 @@ void error(int current_state) {
     Serial.println(current_state + '\n');
     // Serial.println(labels_string[s] + '\n');
     
-    digitalWrite(ERROR_LED, HIGH);
+    if (ERROR_LED_PRESENT) {
+        digitalWrite(ERROR_LED, HIGH);
+    }
+    
 }
 
 void setPins() {
@@ -62,14 +87,18 @@ void setPins() {
     pinMode(KEY_VALID_IN, INPUT);
     pinMode(DOOR_SENSOR_IN, INPUT);
 
-    pinMode(ALARM_OUT, OUTPUT);
-    pinMode(ARMED_OUT, OUTPUT);
-    pinMode(DOOR_LOCK_OUT, OUTPUT);
-    pinMode(KEY_VALID_OUT, OUTPUT);
-    pinMode(DOOR_SENSOR_OUT, OUTPUT);
-
-    pinMode(ERROR_LED, OUTPUT);
-    digitalWrite(ERROR_LED, LOW);
+    if (OUTPUT_PRESENT) {
+        pinMode(ALARM_OUT, OUTPUT);
+        pinMode(ARMED_OUT, OUTPUT);
+        pinMode(DOOR_LOCK_OUT, OUTPUT);
+        pinMode(KEY_VALID_OUT, OUTPUT);
+        pinMode(DOOR_SENSOR_OUT, OUTPUT);
+    }
+    
+    if (ERROR_LED_PRESENT) {
+        pinMode(ERROR_LED, OUTPUT);
+        digitalWrite(ERROR_LED, LOW);   
+    }
 }
 
 void readPinStates() {
@@ -91,14 +120,13 @@ void readPinStates() {
     
     if (current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
         door_status = OPEN_LOCKED;
-    
 }
 
 boolean comparePinStates() {
     auto cmp = true;
 
     for (size_t i = 0; i < input_states_len; i++) {
-        if (current_input_states[i] != prev_input_states[i] && i != KEY_VALID_STATE) {
+        if (current_input_states[i] != prev_input_states[i] /* && i != KEY_VALID_STATE*/) {
             cmp = false;
         }
 
@@ -109,11 +137,13 @@ boolean comparePinStates() {
 }
 
 void updateLEDs() {
-    digitalWrite(ALARM_OUT, current_input_states[ALARM_STATE]);
-    digitalWrite(ARMED_OUT, current_input_states[ARMED_STATE]);
-    digitalWrite(DOOR_LOCK_OUT, current_input_states[DOOR_LOCK_STATE]);
-    digitalWrite(KEY_VALID_OUT, current_input_states[KEY_VALID_STATE]);
-    digitalWrite(DOOR_SENSOR_OUT, current_input_states[DOOR_SENSOR_STATE]);
+    if (OUTPUT_PRESENT) {
+        digitalWrite(ALARM_OUT, current_input_states[ALARM_STATE]);
+        digitalWrite(ARMED_OUT, current_input_states[ARMED_STATE]);
+        digitalWrite(DOOR_LOCK_OUT, current_input_states[DOOR_LOCK_STATE]);
+        digitalWrite(KEY_VALID_OUT, current_input_states[KEY_VALID_STATE]);
+        digitalWrite(DOOR_SENSOR_OUT, current_input_states[DOOR_SENSOR_STATE]);
+    }
 }
 
 // void readPinStates() {

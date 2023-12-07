@@ -50,6 +50,8 @@ Rebeca/out/*/*.txt
 *.statespace
 Rebeca/statespaces/*.dot
 Rebeca/statespaces/*.pdf
+Rebeca/statespaces/tau_transitions.txt
+
 
 # LF
 LF/bin/*
