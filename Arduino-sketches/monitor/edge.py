@@ -133,7 +133,7 @@ def printer(file, start_state, total_states, total_transitions, labels, transiti
         f.write('};\n')
 
 
-file = './Rebeca/src/alarm_states.aut'
+file = './Rebeca/statespaces/alarm_simple_reduced.aut'
 file_out = os.path.dirname(__file__) +'/states.hpp'
 
 start_state, total_states, total_transitions, transitions = parse_aut_file(file)
