@@ -5,7 +5,7 @@ env int user_door = 3;
 env int DOOR_DELAY = 2;
 env int USER_DELAY = 10;
 env int AUTH_DELAY = 1;
-env int BREAKIN_DELAY = 30;
+env int BREAKIN_DELAY = 20;
 
 reactiveclass Controller(10) {
     knownrebecs {
@@ -224,8 +224,8 @@ reactiveclass User(5) {
     }
 
     msgsrv enterKey() {
-        user_delay = ?(15,20);
-        controller.checkKey(key) after(user_delay);
+        //user_delay = ?(15,20);
+        controller.checkKey(key) after(15);
     }
 
     msgsrv keyChecked(boolean valid) {
