@@ -110,106 +110,6 @@ reactiveclass Controller(10) {
     }
 }
 
-// reactiveclass Controller(10) {
-//     knownrebecs {
-//         Door door;
-//         User user;
-//     }
-//     statevars {
-//         boolean armed; 
-//         boolean alarm; 
-//         boolean door_locked;
-//         boolean door_open;
-
-//         //authentication variables 
-//         boolean key_valid;
-//         boolean code_valid;
-//         int valid_key; 
-//         int valid_code;
-//         int attemps; 
-//     }
-
-//     Controller(int key, int code) {
-//         armed = false;
-//         alarm = false;
-//         door_locked = false; 
-//         door_open = false;
-//         key_valid = false;
-//         code_valid = false;
-
-//         valid_key = key;
-//         valid_code = code; 
-//         attemps = 0;
-//     }
-
-//     msgsrv checkKey(int key) {
-//         boolean is_valid = false;
-
-//         if(key == valid_key) {
-//             self.setKeyValid();
-//             is_valid = true;
-//         }
-
-//         user.keyChecked(is_valid); // after(AUTH_DELAY);
-//     }
-
-//     msgsrv checkCode(int code) {
-//         if(code_valid && code == valid_code) {
-//             code_valid = true; 
-//             self.lockedUser();
-//         }
-
-//         user.codeChecked(code_valid);// after(AUTH_DELAY);
-//         self.setKeyInvalid();
-//     }
-
-//     msgsrv lockedUser() {
-//         alarm = false;
-
-//         if (armed) {
-//             self.setUnarmed();
-//         } else {
-//             self.setArmed();
-//         }
-//     }
-
-//     msgsrv setKeyValid() {
-//         key_valid = true;
-
-//         self.setKeyInvalid() after(10);
-//     }
-
-//     msgsrv setKeyInvalid() {
-//         if (key_valid || code_valid) {
-//             key_valid = false;
-//             code_valid = false;
-//         }
-//     }
-
-//     msgsrv setArmed() {
-//         armed = true;
-//         door.lockDoor();
-//     }
-
-//     msgsrv setUnarmed() {
-//         armed = false;
-//         door.unlockDoor();
-//     }
-
-//     msgsrv setDoorStatus(boolean open, boolean locked) {
-//         door_open = open;
-//         door_locked = locked;
-
-//         if (armed && door_open) {
-//             self.alarma();
-//         }
-//     }
-
-//     msgsrv alarma() {
-//         alarm = true;
-//     }
-// }
-
 reactiveclass Door(5) {
     knownrebecs {
         Controller controller;
@@ -324,7 +224,7 @@ reactiveclass User(5) {
     }
 
     msgsrv enterKey() {
-        user_delay = ?(10,15);
+        user_delay = ?(15,20);
         controller.checkKey(key) after(user_delay);
     }
 
