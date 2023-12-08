@@ -2,12 +2,17 @@
 
 int current_state = 0;
 int next_state = 0;
-int sleep = POLL_TIME;
 
 boolean error_state = false;
-boolean tau_transition_next = false;
 
-int states_len, startpos, endpos;
+/* Not used for now */
+boolean timer_on = false;
+unsigned long timer = 0;
+
+int read_inputs = 0;
+int prev_inputs = 0;
+
+int possible_states_len, startpos, endpos;
 
 void setup() {
     Serial.begin(BAUD);
@@ -18,21 +23,22 @@ void setup() {
 }
 
 void loop() {   
-    readPinStates();
+    read_inputs = readInputs();
     updateLEDs(); // To make it easier to follow
 
+    // If timer is turned on and has run out, do something
+    if (timer_on && timer < millis())
+    {
+        Serial.println(F("Time ran out"));
+    }
+    
     // Do nothing if pin states is same
-    if (comparePinStates() && !tau_transition_next) {
-        delay(sleep);
+    if (read_inputs == prev_inputs) {
+        delay(POLL_TIME);
         return;
     }
     
-    tau_transition_next = false;
-    
-    for (auto &&i : current_input_states) { // Simple debug output
-        Serial << i << ' ';
-    }
-    Serial << '\n';
+    printdebugInput();
     
     // Error out early
     if (error_state) {
@@ -40,139 +46,59 @@ void loop() {
         return;
     }
 
-    sleep = POLL_TIME;
     current_state = next_state;
 
-    states_len = findState(current_state, &startpos, &endpos);
-    error_state = states_len == ERROR_STATE; // Do nothing if error
+    possible_states_len = findState(current_state, &startpos, &endpos);
+    error_state = possible_states_len == ERROR_STATE; // Do nothing if error
 
-    if (!error_state) { // Also debug output
-        printPossibleChoices(startpos, states_len);
-        Serial << "startpos: " << startpos << " endpos: " << endpos << '\n';
-        stateSwitch(states_len, startpos, &sleep);
-        Serial << '\n';
+    if (error_state) {
+        error(current_state);
+        return;
     }
+
+    printPossibleChoices();
+
+    // Actual comparison here!
+    next_state = compare();
     
-    delay(sleep);
+    prev_inputs = read_inputs;
+    delay(POLL_TIME);
 }
 
-void stateSwitch(int states_len, int startpos, int* sleep) {
-    int n_state = ERROR_STATE; // Gets replaced if a good state found
+int compare() {
+    // For every possible state
+    for (size_t i = 0; i < possible_states_len; i++)
+    {
+        auto state_label = transitions[startpos + i][Label];
+        auto transition_to = transitions[startpos + i][To];
 
-    for (size_t i = 0; i < states_len; i++) {
-        switch (transitions[startpos + i][Label]) {
-            case door_opendoor: // Expecting open door
-                if (current_input_states[DOOR_SENSOR_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Door opened"));
-                }
-                break;
-
-            case door_closedoor: // Expecting closed door
-                if (!current_input_states[DOOR_SENSOR_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Door closed"));
-                }
-                break;
-
-            case door_lockdoor: // Expecting a docked door
-                if (current_input_states[DOOR_LOCK_STATE] && !current_input_states[DOOR_SENSOR_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Door locked"));
-                }
-                break;
-
-            case door_unlockdoor:
-                if (!current_input_states[DOOR_LOCK_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Door unlocked"));
-                }
-                break;
-            
-            case controller_setarmed:
-                if (current_input_states[ARMED_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Alarm set armed"));
-                }
-                break;
-
-            case controller_setdoorstatus:
-                Serial << "door_status " << door_status << "\n";
-                if (transitions[startpos + i][Value] == door_status)
-                {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Door status changed"));
-                }
-                
-                break;
-
-            case controller_setunarmed:
-                if (!current_input_states[ARMED_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Alarm set unarmed"));
-                }
-                break;
-
-            case controller_alarma:
-                if (current_input_states[ALARM_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("ALARMA!"));
-                }
-                break;
-
-            case time:
-                *sleep = transitions[startpos + i][Value] * 1000;
-                Serial << "Time encountered, " << *sleep << "\n";
-                n_state = transitions[startpos + i][To];
-                tau_transition_next = true;
-                break;
-
-            case controller_setkeyvalid:
-                if (current_input_states[KEY_VALID_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Valid key read"));
-                }
-                break;
-
-            case controller_setkeyinvalid:
-                if (!current_input_states[KEY_VALID_STATE]) {
-                    n_state = transitions[startpos + i][To];
-                    Serial.println(F("Valid key read timeout"));
-                }
-                break;
-            
-            default:
-                break;
+        // Compare the states possible inputs
+        auto is_match = expected_inputs[state_label].inputs_len == 0; // If 0 then for wont run
+        for (size_t j = 0; j < expected_inputs[state_label].inputs_len; j++) {
+            if (read_inputs == expected_inputs[state_label].valid_inputs[i]) {
+                is_match = true;
+                // Serial.print("Kompilator Kompis Kim");
+                // Serial.println(output_strings[state_label]);
+            }
         }
 
-        if (n_state != ERROR_STATE) { // If a match was found then go with it
-            break;
+        if (is_match) {
+            return transition_to;
         }
     }
 
-    if (n_state == ERROR_STATE) { // We want to stop loop if encounter error
-        error_state = true;
-    }
-
-    int next_start, next_end;
-    findState(n_state, &next_start, &next_end); // Translate a state id to its index in transisions array
-
-    if (
-        transitions[next_start][Label] == controller_setdoorstatus || 
-        transitions[next_start][Label] == time
-    ) { // Treating setdoorstatus as a tau
-        tau_transition_next = true;
-        Serial.println("Tau transition next");
-    }
-
-    next_state = n_state;  
+    return ERROR_STATE;
 }
 
-void printPossibleChoices(int start, int len) { 
+// void printStateOutput(int state) {
+//     Serial.println(output_strings[state]);
+// }
+
+void printPossibleChoices() { 
     Serial << "Current state:" << " " << current_state << ", possible labels -> ";   
 
-    for (size_t i = 0; i < len; i++) {
-        int s = transitions[start + i][Label];
+    for (size_t i = 0; i < possible_states_len; i++) {
+        int s = transitions[startpos + i][Label];
         Serial << labels_string[s] << " ";
     }
     

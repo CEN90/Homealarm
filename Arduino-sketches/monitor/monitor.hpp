@@ -16,6 +16,9 @@
 // constexpr int KEY_VALID_OUT = PIN4;
 // constexpr int DOOR_SENSOR_OUT = PIN3;
 
+constexpr int input_pins_len = 5;
+constexpr int input_pins[input_pins_len] = { PIN4, PIN3, PIN2, 50, 51 };
+
 // Input Arduino Mega pinout
 constexpr int ALARM_IN = PIN4;
 constexpr int ARMED_IN = PIN3;
@@ -66,18 +69,52 @@ enum door_status {
 };
 int door_status = CLOSED_UNLOCKED;
 
+struct inputs_t {
+    int state;
+    int inputs_len;
+    int valid_inputs[];
+};
+
+inputs_t expected_inputs[11] = {
+    { door_opendoor, 2, { 16, 24 } },
+    { controller_setkeyvalid, 4, { 8, 14, 15, 32 } },
+    { controller_setdoorstatus, 0, { 0 } },
+    { door_closedoor, 2, { 0, 8 } },
+    { time, 0, { 0 } },
+    { door_unlockdoor, 2, { 16, 24 } },
+    { controller_setunarmed, 2, { 0, 16 } },
+    { controller_setkeyinvalid, 3, { 0, 6, 7 } },
+    { door_lockdoor, 2, { 6, 24 } },
+    { controller_setarmed, 2, { 6, 13 } },
+    { controller_alarma, 3, { 7, 23, 32 } },
+};
+
+String output_strings[11] = {
+    "Door opened",
+    "Valid key read",
+    "Door status changed",
+    "Door closed",
+    "time",
+    "Door locked",
+    "Alarm set unarmed",
+    "Valid key read timeout",
+    "Door unlocked",
+    "Alarm set armed",
+    "ALARMA!",
+};
+
 void error(int current_state) {
     int s = transitions[current_state][Label];
     
-    Serial.println(F("Something went wrong!"));
-    Serial.print(F("Previous state: "));
+    Serial.println("Something went wrong!");
+    Serial.print("Previous state: ");
+    // Serial.println(F("Something went wrong!"));
+    // Serial.print(F("Previous state: "));
     Serial.println(current_state + '\n');
-    // Serial.println(labels_string[s] + '\n');
     
     if (ERROR_LED_PRESENT) {
         digitalWrite(ERROR_LED, HIGH);
     }
-    
 }
 
 void setPins() {
@@ -146,21 +183,21 @@ void updateLEDs() {
     }
 }
 
-// void readPinStates() {
-//     alarm_state = digitalRead(ALARM_IN);
-//     armed_state = digitalRead(ARMED_IN);
-//     door_lock_state = digitalRead(DOOR_LOCK_IN);
-//     key_valid_state = digitalRead(KEY_VALID_IN);
-//     door_sensor_state = digitalRead(DOOR_SENSOR_IN);
-// }
+int readInputs() {
+    int result = 0;
+    for (int i = 0; i < input_pins_len; i++) {
+        result += digitalRead(input_pins[i]) << i;
+    }
 
-// void updateLEDs() {
-//     digitalWrite(ALARM_OUT, alarm_state);
-//     digitalWrite(ARMED_OUT, armed_state);
-//     digitalWrite(DOOR_LOCK_OUT, door_lock_state);
-//     digitalWrite(KEY_VALID_OUT, key_valid_state);
-//     digitalWrite(DOOR_SENSOR_OUT, door_sensor_state);
-// }
+    return result;
+}
+
+void printdebugInput() {
+    for (auto &&i : current_input_states) { // Simple debug output
+        Serial << i << ' ';
+    }
+    Serial << '\n';
+}
 
 template <typename T>
 Print& operator<<(Print& printer, T value) {
