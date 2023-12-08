@@ -5,6 +5,7 @@ int current_state = 0;
 int next_state = 0;
 
 boolean error_state = false;
+boolean tau = false;
 
 /* Not used for now */
 boolean timer_on = false;
@@ -34,15 +35,16 @@ void loop() {
     }
     
     // Do nothing if pin states is same
-    if (read_inputs == prev_inputs) {
+    if ((read_inputs == prev_inputs && !tau) || error_state) {
         delay(POLL_TIME);
         return;
     }
     
-    // printdebugInput();
+    printdebugInput(); // Print input to terminal
     
     // Error out early
     if (next_state == ERROR_STATE) {
+        error_state = true;
         error(current_state);
         return;
     }
@@ -51,12 +53,13 @@ void loop() {
 
     possible_states_len = findState(current_state, &startpos, &endpos);
 
+    // If no new state could be found then go to ERROR_STATE
     if (possible_states_len == ERROR_STATE) {
-        error(current_state);
+        next_state = ERROR_STATE;
         return;
     }
 
-    printPossibleChoices(startpos, possible_states_len);
+    printPossibleChoices(current_state, startpos, possible_states_len);
 
     // Actual comparison here!
     next_state = compare(startpos, possible_states_len);
@@ -71,10 +74,20 @@ int compare(int start, int len) {
     {
         int state_label = transitions[start + i][Label];
         int transition_to = transitions[start + i][To];
+        int inputs_len = expected_inputs[state_label].inputs_len;
         
         // Compare the states possible inputs
-        boolean is_match = expected_inputs[state_label].inputs_len == 0; // If then skip for
-        for (size_t j = 0; j < expected_inputs[state_label].inputs_len; j++) {
+        boolean is_match = false; // If then skip for
+
+        if (inputs_len == 0) {
+            tau = true;
+            is_match = true;
+            Serial.println(F("Encountered a tau transition"));
+        } else {
+            tau = false;
+        }
+
+        for (size_t j = 0; j < inputs_len; j++) {
             if (read_inputs == expected_inputs[state_label].valid_inputs[j]) {
                 printStateOutput(state_label);
                 is_match = true;
@@ -87,15 +100,4 @@ int compare(int start, int len) {
     }
 
     return ERROR_STATE;
-}
-
-void printPossibleChoices(int start, int len) { 
-    Serial << "Current state:" << " " << current_state << ", possible labels -> ";   
-
-    for (size_t i = 0; i < len; i++) {
-        int s = transitions[start + i][Label];
-        Serial << labels_string[s] << " ";
-    }
-    
-    Serial.println("");
 }

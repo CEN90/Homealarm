@@ -104,10 +104,8 @@ String output_strings[11] = {
 void error(int current_state) {
     int s = transitions[current_state][Label];
     
-    Serial.println("Something went wrong!");
-    Serial.print("Previous state: ");
-    // Serial.println(F("Something went wrong!"));
-    // Serial.print(F("Previous state: "));
+    Serial.println(F("Something went wrong!"));
+    Serial.print(F("Previous state -> "));
     Serial.println(current_state + '\n');
     
     if (ERROR_LED_PRESENT) {
@@ -116,11 +114,9 @@ void error(int current_state) {
 }
 
 void setPins() {
-    pinMode(ALARM_IN, INPUT);
-    pinMode(ARMED_IN, INPUT);
-    pinMode(DOOR_LOCK_IN, INPUT);
-    pinMode(KEY_VALID_IN, INPUT);
-    pinMode(DOOR_SENSOR_IN, INPUT);
+    for (size_t i = 0; i < input_pins_len; i++) {
+        pinMode(input_pins[i], INPUT);
+    }
 
     if (OUTPUT_PRESENT) {
         pinMode(ALARM_OUT, OUTPUT);
@@ -136,40 +132,40 @@ void setPins() {
     }
 }
 
-void readPinStates() {
-    current_input_states[ALARM_STATE] = digitalRead(ALARM_IN);
-    current_input_states[ARMED_STATE] = digitalRead(ARMED_IN);
-    current_input_states[DOOR_LOCK_STATE] = digitalRead(DOOR_LOCK_IN);
-    current_input_states[KEY_VALID_STATE] = digitalRead(KEY_VALID_IN);
-    current_input_states[DOOR_SENSOR_STATE] = digitalRead(DOOR_SENSOR_IN);
+// void readPinStates() {
+//     current_input_states[ALARM_STATE] = digitalRead(ALARM_IN);
+//     current_input_states[ARMED_STATE] = digitalRead(ARMED_IN);
+//     current_input_states[DOOR_LOCK_STATE] = digitalRead(DOOR_LOCK_IN);
+//     current_input_states[KEY_VALID_STATE] = digitalRead(KEY_VALID_IN);
+//     current_input_states[DOOR_SENSOR_STATE] = digitalRead(DOOR_SENSOR_IN);
 
-    door_status = CLOSED_UNLOCKED;
-    if (!current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
-        door_status = CLOSER_LOCKED;
+//     door_status = CLOSED_UNLOCKED;
+//     if (!current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
+//         door_status = CLOSER_LOCKED;
     
-    if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
-        door_status = OPEN_UNLOCKED;
+//     if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
+//         door_status = OPEN_UNLOCKED;
     
-    if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
-        door_status = OPEN_UNLOCKED;
+//     if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
+//         door_status = OPEN_UNLOCKED;
     
-    if (current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
-        door_status = OPEN_LOCKED;
-}
+//     if (current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
+//         door_status = OPEN_LOCKED;
+// }
 
-boolean comparePinStates() {
-    auto cmp = true;
+// boolean comparePinStates() {
+//     auto cmp = true;
 
-    for (size_t i = 0; i < input_states_len; i++) {
-        if (current_input_states[i] != prev_input_states[i] /* && i != KEY_VALID_STATE*/) {
-            cmp = false;
-        }
+//     for (size_t i = 0; i < input_states_len; i++) {
+//         if (current_input_states[i] != prev_input_states[i] /* && i != KEY_VALID_STATE*/) {
+//             cmp = false;
+//         }
 
-        prev_input_states[i] = current_input_states[i];
-    }
+//         prev_input_states[i] = current_input_states[i];
+//     }
     
-    return cmp;
-}
+//     return cmp;
+// }
 
 void updateLEDs() {
     if (OUTPUT_PRESENT) {
@@ -207,6 +203,17 @@ Print& operator<<(Print& printer, T value) {
     return printer;
 }
 
+void printPossibleChoices(int current, int start, int len) { 
+    Serial << "Current state:" << " " << current << ", possible labels -> ";   
+
+    for (size_t i = 0; i < len; i++) {
+        int s = transitions[start + i][Label];
+        Serial << labels_string[s] << " ";
+    }
+    
+    Serial.println("");
+}
+
 int findState(int searched, int* startpos, int* endpos) {
     *startpos = searched;
 
@@ -221,5 +228,5 @@ int findState(int searched, int* startpos, int* endpos) {
     }
     
     int len = *endpos - *startpos + 1;
-    return len > 0 ? len : -1; // return -1 if error
+    return len > 0 ? len : ERROR_STATE; // return -1 if error
 }
