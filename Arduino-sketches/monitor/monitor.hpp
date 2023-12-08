@@ -1,7 +1,5 @@
 #include "states.hpp"
 
-#define BAUD  115200
-
 // Input Arduino Uno
 // constexpr int ALARM_IN = 13;
 // constexpr int ARMED_IN = 12;
@@ -72,7 +70,7 @@ int door_status = CLOSED_UNLOCKED;
 struct inputs_t {
     int state;
     int inputs_len;
-    int valid_inputs[];
+    int valid_inputs[input_pins_len];
 };
 
 inputs_t expected_inputs[11] = {
@@ -197,6 +195,10 @@ void printdebugInput() {
         Serial << i << ' ';
     }
     Serial << '\n';
+}
+
+void printStateOutput(int state) {
+    Serial.println(output_strings[state] + "\n");
 }
 
 template <typename T>

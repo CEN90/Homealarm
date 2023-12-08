@@ -1,4 +1,5 @@
 #include "monitor.hpp"
+#define BAUD  115200
 
 int current_state = 0;
 int next_state = 0;
@@ -29,7 +30,7 @@ void loop() {
     // If timer is turned on and has run out, do something
     if (timer_on && timer < millis())
     {
-        Serial.println(F("Time ran out"));
+        Serial.println("Time ran out");
     }
     
     // Do nothing if pin states is same
@@ -38,10 +39,10 @@ void loop() {
         return;
     }
     
-    printdebugInput();
+    // printdebugInput();
     
     // Error out early
-    if (error_state) {
+    if (next_state == ERROR_STATE) {
         error(current_state);
         return;
     }
@@ -49,36 +50,34 @@ void loop() {
     current_state = next_state;
 
     possible_states_len = findState(current_state, &startpos, &endpos);
-    error_state = possible_states_len == ERROR_STATE; // Do nothing if error
 
-    if (error_state) {
+    if (possible_states_len == ERROR_STATE) {
         error(current_state);
         return;
     }
 
-    printPossibleChoices();
+    printPossibleChoices(startpos, possible_states_len);
 
     // Actual comparison here!
-    next_state = compare();
+    next_state = compare(startpos, possible_states_len);
     
     prev_inputs = read_inputs;
     delay(POLL_TIME);
 }
 
-int compare() {
+int compare(int start, int len) {
     // For every possible state
-    for (size_t i = 0; i < possible_states_len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        auto state_label = transitions[startpos + i][Label];
-        auto transition_to = transitions[startpos + i][To];
-
+        int state_label = transitions[start + i][Label];
+        int transition_to = transitions[start + i][To];
+        
         // Compare the states possible inputs
-        auto is_match = expected_inputs[state_label].inputs_len == 0; // If 0 then for wont run
+        boolean is_match = expected_inputs[state_label].inputs_len == 0; // If then skip for
         for (size_t j = 0; j < expected_inputs[state_label].inputs_len; j++) {
-            if (read_inputs == expected_inputs[state_label].valid_inputs[i]) {
+            if (read_inputs == expected_inputs[state_label].valid_inputs[j]) {
+                printStateOutput(state_label);
                 is_match = true;
-                // Serial.print("Kompilator Kompis Kim");
-                // Serial.println(output_strings[state_label]);
             }
         }
 
@@ -90,15 +89,11 @@ int compare() {
     return ERROR_STATE;
 }
 
-// void printStateOutput(int state) {
-//     Serial.println(output_strings[state]);
-// }
-
-void printPossibleChoices() { 
+void printPossibleChoices(int start, int len) { 
     Serial << "Current state:" << " " << current_state << ", possible labels -> ";   
 
-    for (size_t i = 0; i < possible_states_len; i++) {
-        int s = transitions[startpos + i][Label];
+    for (size_t i = 0; i < len; i++) {
+        int s = transitions[start + i][Label];
         Serial << labels_string[s] << " ";
     }
     
