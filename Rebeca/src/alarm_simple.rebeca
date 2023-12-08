@@ -4,7 +4,7 @@ env int user_door = 3;
 
 env int DOOR_DELAY = 2;
 env int USER_DELAY = 10;
-env int AUTH_DELAY = 1;
+//env int AUTH_DELAY = 1;
 env int BREAKIN_DELAY = 20;
 
 reactiveclass Controller(10) {
@@ -47,7 +47,7 @@ reactiveclass Controller(10) {
             auth_key = false; 
         }
 
-        user.keyChecked(auth_key) after(AUTH_DELAY);
+        user.keyChecked(auth_key); // after(AUTH_DELAY);
     }
 
     msgsrv checkCode(int code) {
@@ -59,7 +59,7 @@ reactiveclass Controller(10) {
         }
 
         auth_key = false;
-        user.codeChecked(valid) after(AUTH_DELAY);
+        user.codeChecked(valid);// after(AUTH_DELAY);
     }
 
     msgsrv lockedUser() {
