@@ -45,7 +45,8 @@ void loop() {
     // Error out early
     if (next_state == ERROR_STATE) {
         error_state = true;
-        error(current_state);
+        error(startpos);
+        // error(current_state);
         return;
     }
 
@@ -69,6 +70,7 @@ void loop() {
 }
 
 int compare(int start, int len) {
+    printInput(read_inputs);
     // For every possible state
     for (size_t i = 0; i < len; i++)
     {
@@ -99,5 +101,6 @@ int compare(int start, int len) {
         }
     }
 
+    // Serial.println(read_inputs);
     return ERROR_STATE;
 }

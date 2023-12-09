@@ -113,6 +113,7 @@ reactiveclass Controller(10) {
 reactiveclass Door(5) {
     knownrebecs {
         Controller controller;
+        BadActor intruder;
     }
     
     statevars {
@@ -142,6 +143,7 @@ reactiveclass Door(5) {
     msgsrv lockDoor() {
         if (!isOpen){
             isLocked = true;
+            intruder.breakIn() after(DOOR_DELAY);
             controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
@@ -174,7 +176,7 @@ reactiveclass BadActor(5) {
     statevars { }
 
     BadActor() {
-        self.maeby();
+        // self.maeby();
     }
     
     msgsrv maeby(){
@@ -189,6 +191,13 @@ reactiveclass BadActor(5) {
             door.breakDoor();
         } else {
             door.spiedOn() after(BREAKIN_DELAY);
+        }
+    }
+
+    msgsrv breakIn() {
+        boolean conscience = ?(true, false);
+        if (!conscience) {
+            door.breakDoor();
         }
     }
 }
@@ -268,5 +277,5 @@ main {
     User user(controller, door): (user_key, user_door);
     Controller controller(door, user):(user_key, user_door);
     BadActor intruder(door): ();
-    Door door(controller):();
+    Door door(controller, intruder):();
 }

@@ -81,9 +81,9 @@ inputs_t expected_inputs[11] = {
     { time, 0, { 0 } },
     { door_unlockdoor, 2, { 16, 24 } },
     { controller_setunarmed, 2, { 0, 16 } },
-    { controller_setkeyinvalid, 3, { 0, 6, 7 } },
+    { controller_setkeyinvalid, 2, { 0, 6 } },
     { door_lockdoor, 2, { 6, 24 } },
-    { controller_setarmed, 2, { 6, 13 } },
+    { controller_setarmed, 3, { 6, 12, 14 } },
     { controller_alarma, 3, { 7, 23, 32 } },
 };
 
@@ -100,6 +100,11 @@ String output_strings[11] = {
     "Alarm set armed",
     "ALARMA!",
 };
+
+void printInput(int input) {
+    Serial.print("Input: ");
+    Serial.println(input);
+}
 
 void error(int current_state) {
     int s = transitions[current_state][Label];
