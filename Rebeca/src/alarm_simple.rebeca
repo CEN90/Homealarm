@@ -15,7 +15,7 @@ reactiveclass Controller(10) {
     statevars {
         boolean armed; 
         boolean alarm; 
-        boolean door_locked;
+        // boolean door_locked;
         boolean door_open;
 
         //authentication variables 
@@ -29,7 +29,7 @@ reactiveclass Controller(10) {
     Controller(int key, int code) {
         armed = false;
         alarm = false;
-        door_locked = false; 
+        // door_locked = false; 
         door_open = false;
         key_valid = false;
 
@@ -96,14 +96,26 @@ reactiveclass Controller(10) {
         door.unlockDoor();
     }
 
-    msgsrv setDoorStatus(boolean open, boolean locked) {
-        door_open = open;
-        door_locked = locked;
+    msgsrv doorOpened() {
+        door_open = true;
 
-        if (armed && door_open) {
+        if (armed) {
             self.alarma();
         }
     }
+
+    msgsrv doorClosed() {
+        door_open = false;
+    }
+
+    // msgsrv setDoorStatus(boolean open, boolean locked) {
+    //     door_open = open;
+    //     door_locked = locked;
+
+    //     if (armed && door_open) {
+    //         self.alarma();
+    //     }
+    // }
 
     msgsrv alarma() {
         alarm = true;
@@ -129,34 +141,37 @@ reactiveclass Door(5) {
     msgsrv openDoor() {
         if (!isLocked && !isOpen){
             isOpen = true; 
-            controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+            controller.doorOpened() after(DOOR_DELAY);
+            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
 
     msgsrv closeDoor() {
         if (!isOpen) {
             isLocked = true;
-            controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+            controller.doorClosed() after(DOOR_DELAY);
+            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
 
     msgsrv lockDoor() {
         if (!isOpen){
             isLocked = true;
-            intruder.breakIn() after(DOOR_DELAY);
-            controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+            intruder.breakIn() after(DOOR_DELAY / 2);
+            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
 
     msgsrv unlockDoor() {
         isLocked = false; 
-        controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+        // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
     }
 
     msgsrv breakDoor() {
         isOpen = true;
         isLocked = false;
-        controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+        controller.doorOpened();
+        // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
     }
 
     msgsrv getLockStatus() {
