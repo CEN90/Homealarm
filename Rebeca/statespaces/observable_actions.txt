@@ -1,1 +1,1 @@
-door.lockdoor,door.unlockdoor,controller.alarma,controller.setarmed,controller.setunarmed,controller.setkeyvalid,controller.doorOpened,controller.doorClosed,(
+door.lockdoor,door.unlockdoor,controller.alarma,controller.setarmed,controller.setunarmed,controller.setkeyvalid,controller.dooropened,controller.doorclosed,(
