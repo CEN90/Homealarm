@@ -1,10 +1,8 @@
-//env int doorSensor_id = 1; 
 env int user_key = 2;
 env int user_door = 3; 
 
 env int DOOR_DELAY = 2;
 env int USER_DELAY = 10;
-//env int AUTH_DELAY = 1;
 env int BREAKIN_DELAY = 20;
 
 reactiveclass Controller(10) {
@@ -15,7 +13,6 @@ reactiveclass Controller(10) {
     statevars {
         boolean armed; 
         boolean alarm; 
-        // boolean door_locked;
         boolean door_open;
 
         //authentication variables 
@@ -29,7 +26,6 @@ reactiveclass Controller(10) {
     Controller(int key, int code) {
         armed = false;
         alarm = false;
-        // door_locked = false; 
         door_open = false;
         key_valid = false;
 
@@ -47,7 +43,7 @@ reactiveclass Controller(10) {
             auth_key = false; 
         }
 
-        user.keyChecked(auth_key); // after(AUTH_DELAY);
+        user.keyChecked(auth_key);
     }
 
     msgsrv checkCode(int code) {
@@ -59,7 +55,7 @@ reactiveclass Controller(10) {
         }
 
         auth_key = false;
-        user.codeChecked(valid);// after(AUTH_DELAY);
+        user.codeChecked(valid);
     }
 
     msgsrv lockedUser() {
@@ -87,8 +83,10 @@ reactiveclass Controller(10) {
     }
 
     msgsrv setArmed() {
-        armed = true;
-        door.lockDoor();
+        if (!door_open) {
+            armed = true;
+            door.lockDoor();
+        }
     }
 
     msgsrv setUnarmed() {
@@ -107,15 +105,6 @@ reactiveclass Controller(10) {
     msgsrv doorClosed() {
         door_open = false;
     }
-
-    // msgsrv setDoorStatus(boolean open, boolean locked) {
-    //     door_open = open;
-    //     door_locked = locked;
-
-    //     if (armed && door_open) {
-    //         self.alarma();
-    //     }
-    // }
 
     msgsrv alarma() {
         alarm = true;
@@ -142,44 +131,31 @@ reactiveclass Door(5) {
         if (!isLocked && !isOpen){
             isOpen = true; 
             controller.doorOpened() after(DOOR_DELAY);
-            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
 
     msgsrv closeDoor() {
-        if (!isOpen) {
-            isLocked = true;
+        if (isOpen) {
+            isOpen = false;
             controller.doorClosed() after(DOOR_DELAY);
-            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
         }
     }
 
     msgsrv lockDoor() {
         if (!isOpen){
             isLocked = true;
-            intruder.breakIn() after(DOOR_DELAY / 2);
-            // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
+            intruder.breakIn() after(DOOR_DELAY / 2); // Door can't be trusted
         }
     }
 
     msgsrv unlockDoor() {
         isLocked = false; 
-        // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
     }
 
     msgsrv breakDoor() {
         isOpen = true;
         isLocked = false;
         controller.doorOpened();
-        // controller.setDoorStatus(isOpen, isLocked) after(DOOR_DELAY);
-    }
-
-    msgsrv getLockStatus() {
-        ((User)sender).setStatus(isLocked);
-    }
-
-    msgsrv spiedOn() {
-        ((BadActor)sender).spyingDoor(isLocked);
     }
 }
 
@@ -189,25 +165,6 @@ reactiveclass BadActor(5) {
     }
 
     statevars { }
-
-    BadActor() {
-        // self.maeby();
-    }
-    
-    msgsrv maeby(){
-    	int career_path = ?(1, 0);
-        if(career_path == 1) {
-            self.spyingDoor(false) after(BREAKIN_DELAY);
-        }
-    }
-
-    msgsrv spyingDoor(boolean locked) {
-        if (locked) {
-            door.breakDoor();
-        } else {
-            door.spiedOn() after(BREAKIN_DELAY);
-        }
-    }
 
     msgsrv breakIn() {
         boolean conscience = ?(true, false);
@@ -239,8 +196,9 @@ reactiveclass User(5) {
     }
     
     msgsrv start(){
-        int path = ?(1, 0);
-        if (path == 0){
+        boolean path = ?(true, false);
+
+        if (path){
             self.openDoor();
         } else {
             self.enterKey();
@@ -248,8 +206,7 @@ reactiveclass User(5) {
     }
 
     msgsrv enterKey() {
-        //user_delay = ?(15,20);
-        controller.checkKey(key) after(15);
+        controller.checkKey(key) after(USER_DELAY);
     }
 
     msgsrv keyChecked(boolean valid) {
@@ -262,14 +219,10 @@ reactiveclass User(5) {
 
     msgsrv codeChecked(boolean valid) {
         if (valid) {
-            door.getLockStatus();
+            locked = !locked;
         }
 
-        if (locked) {
-            self.openDoor() after(USER_DELAY);
-        } else {
-            self.enterKey() after(USER_DELAY);
-        }
+        self.start() after(USER_DELAY);
     }
 
     msgsrv setStatus(boolean status) {
@@ -277,14 +230,12 @@ reactiveclass User(5) {
     }
 
     msgsrv openDoor() {
-        door.openDoor();
-        self.closeDoor() after(USER_DELAY);
-    }
+        if (!locked) {
+            door.openDoor();
+            door.closeDoor() after(DOOR_DELAY + 1);
+        }
 
-    msgsrv closeDoor() {
-        door.closeDoor();
         self.start() after(USER_DELAY);
-        // self.enterKey() after(USER_DELAY);
     }
 }
 
