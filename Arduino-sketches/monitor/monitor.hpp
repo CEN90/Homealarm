@@ -59,46 +59,42 @@ enum input_states {
     DOOR_SENSOR_STATE
 };
 
-enum door_status {
-    CLOSED_UNLOCKED,
-    CLOSER_LOCKED,
-    OPEN_UNLOCKED,
-    OPEN_LOCKED // Can't happen!
-};
-int door_status = CLOSED_UNLOCKED;
+// enum door_status {
+//     CLOSED_UNLOCKED,
+//     CLOSER_LOCKED,
+//     OPEN_UNLOCKED,
+//     OPEN_LOCKED // Can't happen!
+// };
+// int door_status = CLOSED_UNLOCKED;
 
 struct inputs_t {
     int state;
     int inputs_len;
-    int valid_inputs[input_pins_len];
+    int valid_inputs[input_pins_len + 2];
 };
 
-inputs_t expected_inputs[11] = {
-    { door_opendoor, 2, { 16, 24 } },
-    { controller_setkeyvalid, 4, { 8, 14, 15, 32 } },
-    { controller_setdoorstatus, 0, { 0 } },
-    { door_closedoor, 2, { 0, 8 } },
+inputs_t expected_inputs[9] = {
+    { controller_dooropened, 3, { 16, 22, 23 } },
+    { controller_setkeyvalid, 5, { 8, 14, 15, 31, 7 } },
     { time, 0, { 0 } },
-    { door_unlockdoor, 2, { 16, 24 } },
-    { controller_setunarmed, 2, { 0, 16 } },
-    { controller_setkeyinvalid, 2, { 0, 6 } },
-    { door_lockdoor, 2, { 6, 24 } },
+    { controller_doorclosed, 2, { 0, 8 } },
+    { door_unlockdoor, 3, { 0, 16, 24 } },
+    { controller_setunarmed, 4, { 0, 10, 16, 26 } },
     { controller_setarmed, 3, { 6, 12, 14 } },
-    { controller_alarma, 3, { 7, 23, 32 } },
+    { controller_alarma, 2, { 23, 32 } },
+    { door_lockdoor, 2, { 6, 24 } },
 };
 
-String output_strings[11] = {
+String output_strings[9] = {
     "Door opened",
     "Valid key read",
-    "Door status changed",
-    "Door closed",
     "time",
-    "Door locked",
-    "Alarm set unarmed",
-    "Valid key read timeout",
+    "Door closed",
     "Door unlocked",
+    "Alarm set unarmed",
     "Alarm set armed",
     "ALARMA!",
+    "Door locked",
 };
 
 void printInput(int input) {
@@ -136,41 +132,6 @@ void setPins() {
         digitalWrite(ERROR_LED, LOW);   
     }
 }
-
-// void readPinStates() {
-//     current_input_states[ALARM_STATE] = digitalRead(ALARM_IN);
-//     current_input_states[ARMED_STATE] = digitalRead(ARMED_IN);
-//     current_input_states[DOOR_LOCK_STATE] = digitalRead(DOOR_LOCK_IN);
-//     current_input_states[KEY_VALID_STATE] = digitalRead(KEY_VALID_IN);
-//     current_input_states[DOOR_SENSOR_STATE] = digitalRead(DOOR_SENSOR_IN);
-
-//     door_status = CLOSED_UNLOCKED;
-//     if (!current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
-//         door_status = CLOSER_LOCKED;
-    
-//     if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
-//         door_status = OPEN_UNLOCKED;
-    
-//     if (current_input_states[DOOR_SENSOR_STATE] && !current_input_states[DOOR_LOCK_STATE])
-//         door_status = OPEN_UNLOCKED;
-    
-//     if (current_input_states[DOOR_SENSOR_STATE] && current_input_states[DOOR_LOCK_STATE])
-//         door_status = OPEN_LOCKED;
-// }
-
-// boolean comparePinStates() {
-//     auto cmp = true;
-
-//     for (size_t i = 0; i < input_states_len; i++) {
-//         if (current_input_states[i] != prev_input_states[i] /* && i != KEY_VALID_STATE*/) {
-//             cmp = false;
-//         }
-
-//         prev_input_states[i] = current_input_states[i];
-//     }
-    
-//     return cmp;
-// }
 
 void updateLEDs() {
     if (OUTPUT_PRESENT) {
