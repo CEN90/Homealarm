@@ -59,16 +59,16 @@ reactiveclass Controller(10) {
     }
 
     msgsrv lockedUser() {
-        boolean internal_armed = !armed;   
-
         if (alarm) {
             alarm = false;
         }  
 
-        if (internal_armed) {
-            self.setArmed();
-        } else {
+        if (armed) {
             self.setUnarmed();
+        } else {
+            if (!door_open) {
+                self.setArmed();
+            }
         }
     }
 
@@ -83,10 +83,8 @@ reactiveclass Controller(10) {
     }
 
     msgsrv setArmed() {
-        if (!door_open) {
-            armed = true;
-            door.lockDoor();
-        }
+        armed = true;
+        door.lockDoor();        
     }
 
     msgsrv setUnarmed() {
@@ -183,14 +181,12 @@ reactiveclass User(5) {
     statevars {
         int key, code;
         boolean locked;
-        int user_delay;
     }
 
     User(int k, int c) {
         key = k;
         code = c;
         locked = false;
-        user_delay = 0;
 
 		self.start();
     }
@@ -223,10 +219,6 @@ reactiveclass User(5) {
         }
 
         self.start() after(USER_DELAY);
-    }
-
-    msgsrv setStatus(boolean status) {
-        locked = status;
     }
 
     msgsrv openDoor() {
