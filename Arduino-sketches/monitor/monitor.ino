@@ -29,8 +29,7 @@ void loop() {
     updateLEDs(); // To make it easier to follow
 
     // If timer is turned on and has run out, do something
-    if (timer_on && timer < millis())
-    {
+    if (timer_on && timer < millis()) {
         Serial.println("Time ran out");
     }
     
@@ -91,6 +90,7 @@ int compare(int start, int len) {
 
         for (size_t j = 0; j < inputs_len; j++) {
             if (read_inputs == expected_inputs[state_label].valid_inputs[j]) {
+                printState(state_label);
                 printStateOutput(state_label);
                 is_match = true;
             }
@@ -101,6 +101,6 @@ int compare(int start, int len) {
         }
     }
 
-    // Serial.println(read_inputs);
+    Serial.println("Failed to match input to a state!");
     return ERROR_STATE;
 }

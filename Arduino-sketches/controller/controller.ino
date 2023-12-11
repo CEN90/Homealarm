@@ -85,6 +85,7 @@ void ALARMA() {
     alarm = true;
     Serial.println(F("ALARMA!"));
     digitalWrite(ALARM_OUTPUT, HIGH);
+    digitalWrite(DOOR_LOCK, LOW); // If door is kicked in then it's no longer locked
 }
 
 void turnOffAlarm() {

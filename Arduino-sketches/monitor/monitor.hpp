@@ -77,11 +77,11 @@ inputs_t expected_inputs[9] = {
     { controller_dooropened, 3, { 16, 22, 23 } },
     { controller_setkeyvalid, 5, { 8, 14, 15, 31, 7 } },
     { time, 0, { 0 } },
-    { controller_doorclosed, 2, { 0, 8 } },
+    { controller_doorclosed, 4, { 0, 3, 8, 19 } },
     { door_unlockdoor, 3, { 0, 16, 24 } },
     { controller_setunarmed, 4, { 0, 10, 16, 26 } },
+    { controller_alarma, 3, { 23, 19, 32 } },
     { controller_setarmed, 3, { 6, 12, 14 } },
-    { controller_alarma, 2, { 23, 32 } },
     { door_lockdoor, 2, { 6, 24 } },
 };
 
@@ -92,8 +92,8 @@ String output_strings[9] = {
     "Door closed",
     "Door unlocked",
     "Alarm set unarmed",
-    "Alarm set armed",
     "ALARMA!",
+    "Alarm set armed",
     "Door locked",
 };
 
@@ -157,6 +157,10 @@ void printdebugInput() {
         Serial << i << ' ';
     }
     Serial << '\n';
+}
+
+void printState(int state) {
+    Serial.print(labels_string[state] + ": ");
 }
 
 void printStateOutput(int state) {

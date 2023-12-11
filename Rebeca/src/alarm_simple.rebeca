@@ -52,6 +52,10 @@ reactiveclass Controller(10) {
         if(auth_key && code == valid_code) {
             self.lockedUser();
             valid = true; 
+        } else {
+            // if (armed && alarm) {
+            //     self.alarma();
+            // }
         }
 
         auth_key = false;
@@ -61,6 +65,7 @@ reactiveclass Controller(10) {
     msgsrv lockedUser() {
         if (alarm) {
             alarm = false;
+            user.notifyAlarmOff();
         }  
 
         if (armed) {
@@ -74,8 +79,9 @@ reactiveclass Controller(10) {
 
     msgsrv setKeyValid() {
         key_valid = true;
-        delay(10);
-        self.setKeyInvalid();
+        // delay(10);
+
+        self.setKeyInvalid() after(10);
     }
 
     msgsrv setKeyInvalid() {
@@ -102,10 +108,15 @@ reactiveclass Controller(10) {
 
     msgsrv doorClosed() {
         door_open = false;
+
+        if (alarm) {
+            self.alarma();
+        }
     }
 
     msgsrv alarma() {
         alarm = true;
+        user.notifyAlarmOn();
     }
 }
 
@@ -154,6 +165,10 @@ reactiveclass Door(5) {
         isOpen = true;
         isLocked = false;
         controller.doorOpened();
+
+        if(?(true, false)) {
+            self.closeDoor();// after(1);
+        }
     }
 }
 
@@ -181,12 +196,14 @@ reactiveclass User(5) {
     statevars {
         int key, code;
         boolean locked;
+        boolean alarm;
     }
 
     User(int k, int c) {
         key = k;
         code = c;
         locked = false;
+        alarm = false;
 
 		self.start();
     }
@@ -228,6 +245,14 @@ reactiveclass User(5) {
         }
 
         self.start() after(USER_DELAY);
+    }
+
+    msgsrv notifyAlarmOn() {
+        alarm = true;
+    }
+
+    msgsrv notifyAlarmOff() {
+        alarm = false;
     }
 }
 
