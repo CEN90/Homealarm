@@ -14,14 +14,14 @@
 // constexpr int KEY_VALID_OUT = PIN4;
 // constexpr int DOOR_SENSOR_OUT = PIN3;
 
-constexpr int input_pins_len = 5;
-constexpr int input_pins[input_pins_len] = { PIN4, PIN3, PIN2, 50, 51 };
+constexpr int input_pins_len = 4;
+constexpr int input_pins[input_pins_len] = { PIN4, PIN3, PIN2, 51 };
 
 // Input Arduino Mega pinout
 constexpr int ALARM_IN = PIN4;
 constexpr int ARMED_IN = PIN3;
 constexpr int DOOR_LOCK_IN = PIN2;
-constexpr int KEY_VALID_IN = 50;
+// constexpr int KEY_VALID_IN = 50;
 constexpr int DOOR_SENSOR_IN = 51;
 
 // Output Arduino Uno pinout
@@ -73,27 +73,36 @@ struct inputs_t {
     int valid_inputs[input_pins_len + 2];
 };
 
-inputs_t expected_inputs[9] = {
-    { controller_dooropened, 3, { 16, 22, 23 } },
-    { controller_setkeyvalid, 5, { 8, 14, 15, 31, 7 } },
+inputs_t expected_inputs[8] = {
+    { controller_dooropened, 3, { 8, 9, 11 } },
+    { controller_setunarmed, 1, { 0 } },
     { time, 0, { 0 } },
-    { controller_doorclosed, 4, { 0, 3, 8, 19 } },
-    { door_unlockdoor, 3, { 0, 16, 24 } },
-    { controller_setunarmed, 4, { 0, 10, 16, 26 } },
-    { controller_alarma, 3, { 23, 19, 32 } },
-    { controller_setarmed, 3, { 6, 12, 14 } },
-    { door_lockdoor, 2, { 6, 24 } },
+    { controller_doorclosed, 2, { 0, 1 } },
+    { door_unlockdoor, 1, { 0 } },
+    { controller_setarmed, 3, { 1, 4, 6 } },
+    { controller_alarma, 3, { 1, 3, 11 } },
+    { door_lockdoor, 1, { 6 } },
 };
+
+// inputs_t expected_inputs[8] = {
+//     { controller_dooropened, 4, { 16, 19, 22, 23 } },
+//     { controller_setunarmed, 4, { 0, 10, 16, 26 } },
+//     { time, 0, { 0 } },
+//     { controller_doorclosed, 4, { 0, 3, 8, 19 } },
+//     { door_unlockdoor, 3, { 0, 16, 24 } },
+//     { controller_setarmed, 3, { 6, 12, 14 } },
+//     { controller_alarma, 4, { 3, 23, 19, 32 } },
+//     { door_lockdoor, 2, { 6, 24 } },
+// };
 
 String output_strings[9] = {
     "Door opened",
-    "Valid key read",
+    "Alarm set unarmed",
     "time",
     "Door closed",
     "Door unlocked",
-    "Alarm set unarmed",
-    "ALARMA!",
     "Alarm set armed",
+    "ALARMA!",
     "Door locked",
 };
 
