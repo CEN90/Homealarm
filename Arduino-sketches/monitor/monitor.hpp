@@ -74,36 +74,23 @@ struct inputs_t {
 };
 
 inputs_t expected_inputs[8] = {
-    { controller_dooropened, 3, { 8, 9, 11 } },
-    { controller_setunarmed, 1, { 0 } },
-    { time, 0, { 0 } },
-    { controller_doorclosed, 2, { 0, 1 } },
-    { door_unlockdoor, 1, { 0 } },
-    { controller_setarmed, 3, { 1, 4, 6 } },
-    { controller_alarma, 3, { 1, 3, 11 } },
+    { controller_dooropened, 4, { 8, 9, 11, 14 } },
+    { controller_setunarmed, 1, { 2 } },
+    { controller_doorclosed, 3, { 0, 1, 3 } },
     { door_lockdoor, 1, { 6 } },
+    { door_unlockdoor, 1, { 0 } },
+    { controller_alarma, 3, { 1, 3, 11 } },
+    { controller_setarmed, 3, { 1, 4, 6 } },
 };
-
-// inputs_t expected_inputs[8] = {
-//     { controller_dooropened, 4, { 16, 19, 22, 23 } },
-//     { controller_setunarmed, 4, { 0, 10, 16, 26 } },
-//     { time, 0, { 0 } },
-//     { controller_doorclosed, 4, { 0, 3, 8, 19 } },
-//     { door_unlockdoor, 3, { 0, 16, 24 } },
-//     { controller_setarmed, 3, { 6, 12, 14 } },
-//     { controller_alarma, 4, { 3, 23, 19, 32 } },
-//     { door_lockdoor, 2, { 6, 24 } },
-// };
 
 String output_strings[9] = {
     "Door opened",
     "Alarm set unarmed",
-    "time",
     "Door closed",
-    "Door unlocked",
-    "Alarm set armed",
-    "ALARMA!",
     "Door locked",
+    "Door unlocked",
+    "ALARMA!",
+    "Alarm set armed",
 };
 
 void printInput(int input) {

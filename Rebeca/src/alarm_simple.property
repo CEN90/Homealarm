@@ -8,7 +8,7 @@ property {
     Assertion {
         //  safety_prop1: !a || !b;
         //  safety_prop2: !(a && b);
-        //safety_prop1: !(alarm && !armed); // Alarm is not on while armed
+        safety_prop1: !(alarm && !armed); // Alarm is not on while armed
         //safety_prop2: !(alarm && armed && !door_open); // Alarm is on when door is open and armed
         
         //safety_prop1: !(alarm && !armed);

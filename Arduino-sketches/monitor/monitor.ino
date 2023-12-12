@@ -22,6 +22,8 @@ void setup() {
     setPins();
 
     next_state = start_state;
+
+    Serial.println(F("Ready to start monitor now"));
 }
 
 void loop() {   

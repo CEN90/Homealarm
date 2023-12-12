@@ -3,7 +3,7 @@ env int user_door = 3;
 
 env int DOOR_DELAY = 2;
 env int USER_DELAY = 10;
-env int BREAKIN_DELAY = 20;
+env int BREAKIN_DELAY = 10;
 
 reactiveclass Controller(10) {
     knownrebecs {
@@ -90,7 +90,7 @@ reactiveclass Controller(10) {
 
     msgsrv setUnarmed() {
         armed = false;
-        
+
         if (!door_open) {
             door.unlockDoor();
         }
@@ -147,7 +147,7 @@ reactiveclass Door(5) {
     msgsrv lockDoor() {
         if (!isOpen){
             isLocked = true;
-            intruder.breakIn() after(DOOR_DELAY / 2); // Door can't be trusted
+            intruder.breakIn() after(DOOR_DELAY); // Door can't be trusted
         }
     }
 
@@ -161,7 +161,7 @@ reactiveclass Door(5) {
         controller.doorOpened();
 
         if(?(true, false)) {
-            self.closeDoor();// after(1);
+            self.closeDoor();
         }
     }
 }
@@ -233,10 +233,8 @@ reactiveclass User(5) {
     }
 
     msgsrv openDoor() {
-        // if (!locked) {
-            door.openDoor();
-            door.closeDoor() after(DOOR_DELAY + 1);
-        // }
+        door.openDoor();
+        door.closeDoor() after(DOOR_DELAY);
 
         self.start() after(USER_DELAY);
     }
