@@ -75,11 +75,11 @@ struct inputs_t {
 
 inputs_t expected_inputs[8] = {
     { controller_dooropened, 4, { 8, 9, 11, 14 } },
-    { controller_setunarmed, 1, { 2 } },
+    { controller_setunarmed, 1, { 0 } },
     { controller_doorclosed, 3, { 0, 1, 3 } },
     { door_lockdoor, 1, { 6 } },
-    { door_unlockdoor, 1, { 0 } },
     { controller_alarma, 3, { 1, 3, 11 } },
+    { door_unlockdoor, 1, { 0 } },
     { controller_setarmed, 3, { 1, 4, 6 } },
 };
 
@@ -88,8 +88,8 @@ String output_strings[9] = {
     "Alarm set unarmed",
     "Door closed",
     "Door locked",
-    "Door unlocked",
     "ALARMA!",
+    "Door unlocked",
     "Alarm set armed",
 };
 

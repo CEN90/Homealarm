@@ -14,6 +14,7 @@ reactiveclass Controller(10) {
         boolean armed; 
         boolean alarm; 
         boolean door_open;
+        boolean door_broken;
 
         //authentication variables 
         boolean auth_key;
@@ -28,6 +29,7 @@ reactiveclass Controller(10) {
         alarm = false;
         door_open = false;
         key_valid = false;
+        door_broken = false;
 
         auth_key = false;
         valid_key = key;
@@ -61,7 +63,7 @@ reactiveclass Controller(10) {
     msgsrv lockedUser() {
         if (alarm) {
             alarm = false;
-            user.notifyAlarmOff();
+            self.alarmaOff() after(1);
         }  
 
         if (armed) {
@@ -91,21 +93,29 @@ reactiveclass Controller(10) {
     msgsrv setUnarmed() {
         armed = false;
 
-        if (!door_open) {
+        if (!door_open && !door_broken) {
             door.unlockDoor();
         }
+
+        door_broken = false;
     }
 
     msgsrv doorOpened() {
         door_open = true;
 
         if (armed && !alarm) {
+            door_broken = true;
             self.alarma();
         }
     }
 
     msgsrv doorClosed() {
         door_open = false;
+    }
+
+    msgsrv alarmaOff() {
+        alarm = false;
+        user.notifyAlarmOff();
     }
 
     msgsrv alarma() {
