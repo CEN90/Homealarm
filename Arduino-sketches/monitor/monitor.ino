@@ -11,6 +11,8 @@ boolean tau = false;
 boolean timer_on = false;
 unsigned long timer = 0;
 
+boolean follow_mode = false;
+
 int read_inputs = 0;
 int prev_inputs = 0;
 
@@ -28,7 +30,6 @@ void setup() {
 
 void loop() {   
     read_inputs = readInputs();
-    updateLEDs(); // To make it easier to follow
 
     // If timer is turned on and has run out, do something
     if (timer_on && timer < millis()) {
@@ -36,18 +37,16 @@ void loop() {
     }
     
     // Do nothing if pin states is same
-    if ((read_inputs == prev_inputs && !tau) || error_state) {
+    if (read_inputs == prev_inputs && !tau) {
         delay(POLL_TIME);
         return;
     }
-    
-    printdebugInput(); // Print input to terminal
-    
-    // Error out early
+        
+    // If error then just print out input for logging purposes
     if (next_state == ERROR_STATE) {
-        error_state = true;
-        error(startpos);
-        // error(current_state);
+        follow();
+        delay(POLL_TIME);
+        prev_inputs = read_inputs;
         return;
     }
 
@@ -72,6 +71,7 @@ void loop() {
 
 int compare(int start, int len) {
     printInput(read_inputs);
+
     // For every possible state
     for (size_t i = 0; i < len; i++)
     {
@@ -103,6 +103,13 @@ int compare(int start, int len) {
         }
     }
 
-    Serial.println("Failed to match input to a state!");
+    tau = false;
+    error(startpos);
     return ERROR_STATE;
+}
+
+void follow() {
+    Serial.print("Input recorded: ");
+    printInput(read_inputs);
+    Serial.println("");
 }
