@@ -61,13 +61,12 @@ reactiveclass Controller(10) {
     }
 
     msgsrv lockedUser() {
-        if (alarm) {
-            alarm = false;
-            self.alarmaOff() after(1);
-        }  
-
         if (armed) {
-            self.setUnarmed();
+            if (alarm) {
+                self.alarmaOff();
+            } else {
+                self.setUnarmed();
+            }
         } else {
             if (!door_open) {
                 self.setArmed();
@@ -116,6 +115,7 @@ reactiveclass Controller(10) {
     msgsrv alarmaOff() {
         alarm = false;
         user.notifyAlarmOff();
+        self.setUnarmed();
     }
 
     msgsrv alarma() {

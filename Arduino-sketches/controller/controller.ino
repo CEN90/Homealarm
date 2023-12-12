@@ -7,6 +7,7 @@ boolean alarm = false;
 boolean is_valid_key = false;
 boolean is_valid_code = false;
 boolean door_open = LOW;
+boolean update_door = false;
 
 // Storage for keys pressed by the user
 byte read_keypresse[CODE_LEN] = { 0, 0, 0, 0 };
@@ -40,6 +41,12 @@ void loop() {
 
     digitalWrite(ARMED_OUTPUT, armed);
     digitalWrite(LED_KEY_VALID, is_valid_key);
+
+    if (update_door) {
+        delay(DOOR_LOCK_TIME);
+        setDoorLock(armed);
+        update_door = false;
+    }
 
     // Only read if no valid key scanned 
     if (!is_valid_key) {
@@ -96,7 +103,8 @@ void turnOffAlarm() {
 void setArmedStatus() {
     armed = !armed;
     turnOffAlarm(); // Always turn off alarm if user authenticates
-    setDoorLock(armed);
+    update_door = true;
+    // setDoorLock(armed);
 }
 
 void readKeypad() {

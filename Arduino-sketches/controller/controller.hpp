@@ -7,6 +7,7 @@
 constexpr uint8_t POLL_TIME = 10; 
 constexpr long KEYPRESS_TIME = 10000; 
 constexpr long ERROR_KEY_TIME = 3000; 
+constexpr int DOOR_LOCK_TIME = 500;
 
 // Alarma!
 constexpr uint8_t ALARM_OUTPUT = PIN4;
@@ -48,6 +49,7 @@ constexpr byte valid_code[CODE_LEN] = { 1, 2, 3, 4 };
 void setDoorLock(boolean lock_door) {
     // int new_pos = lock_door ? SERVO_POS_LOCKED : SERVO_POS_UNLOCKED;
     // lock_servo.write(new_pos);
+    
     digitalWrite(DOOR_LOCK, lock_door);
 
     Serial.print(F("Setting door to "));
