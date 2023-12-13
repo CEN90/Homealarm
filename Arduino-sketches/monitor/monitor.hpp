@@ -14,15 +14,9 @@ constexpr int DOOR_SENSOR = 51;
 
 constexpr int input_pins_len = 4;
 constexpr int input_pins[input_pins_len] = { ALARM, ARMED, DOOR_LOCK, DOOR_SENSOR };
-// constexpr int input_pins[input_pins_len] = { PIN4, PIN3, PIN2, 51 };
-
-// Output config
-constexpr int ERROR_LED_PRESENT = 0;
-constexpr int OUTPUT_PRESENT = 0;
 
 // Error output
 constexpr int ERROR_STATE = -1;
-constexpr int ERROR_LED = PIN2;
 constexpr int POLL_TIME = 10;
 
 struct inputs_t {
@@ -60,20 +54,11 @@ void error(int current_state) {
     Serial.print(F("Previous state -> "));
     Serial.println(current_state + '\n');
     Serial.println(F("Failed to match input to a state, entering following mode instead!\n"));
-    
-    if (ERROR_LED_PRESENT) {
-        digitalWrite(ERROR_LED, HIGH);
-    }
 }
 
 void setPins() {
     for (size_t i = 0; i < input_pins_len; i++) {
         pinMode(input_pins[i], INPUT);
-    }
-    
-    if (ERROR_LED_PRESENT) {
-        pinMode(ERROR_LED, OUTPUT);
-        digitalWrite(ERROR_LED, LOW);   
     }
 }
 

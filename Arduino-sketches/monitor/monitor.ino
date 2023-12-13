@@ -1,21 +1,22 @@
 #include "monitor.hpp"
 #define BAUD  115200
 
-int current_state = 0;
-int next_state = 0;
-
-boolean error_state = false;
-boolean tau = false;
 
 /* Not used for now */
 boolean timer_on = false;
 unsigned long timer = 0;
 
+// If error
 boolean follow_mode = false;
+boolean tau = false;
 
 int read_inputs = 0;
 int prev_inputs = 0;
 
+int current_state = 0;
+int next_state = 0;
+
+// State id != index in transition[], keep track of index separately
 int possible_states_len, startpos, endpos;
 
 void setup() {
@@ -31,9 +32,9 @@ void setup() {
 void loop() {   
     read_inputs = readInputs();
 
-    // If timer is turned on and has run out, do something
+    // If timer is turned on and has run out, do something... later
     if (timer_on && timer < millis()) {
-        Serial.println("Time ran out");
+        Serial.println(F("Time ran out"));
     }
     
     // Do nothing if pin states is same
@@ -51,7 +52,6 @@ void loop() {
     }
 
     current_state = next_state;
-
     possible_states_len = findState(current_state, &startpos, &endpos);
 
     // If no new state could be found then go to ERROR_STATE
@@ -69,10 +69,11 @@ void loop() {
     delay(POLL_TIME);
 }
 
+// Match input with possible transitions in current state
 int compare(int start, int len) {
     printInput(read_inputs);
 
-    // For every possible state
+    // For every possible transition in state
     for (size_t i = 0; i < len; i++)
     {
         int state_label = transitions[start + i][Label];
@@ -103,11 +104,13 @@ int compare(int start, int len) {
         }
     }
 
+    // If can't match to a transition then enter follow mode instead
     tau = false;
     error(startpos);
     return ERROR_STATE;
 }
 
+// Follow mode, print input to Serial
 void follow() {
     Serial.print("Input recorded: ");
     printInput(read_inputs);

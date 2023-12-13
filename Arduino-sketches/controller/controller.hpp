@@ -13,6 +13,7 @@ enum attacks_t {
 
 constexpr uint8_t ATTACKS_LEN = 5;
 
+// Description for attacks
 String attack_labels[ATTACKS_LEN] = {
     "Blocking alarm signal.",
     "Blocking door sensor signal.",
@@ -147,6 +148,7 @@ void writeCard() {
         Serial.println(F("MIFARE_Write() success: "));
 }
 
+
 void signalHacked() {
     Serial.println(F("Oh, no. I've been hacked!"));
     
@@ -156,6 +158,7 @@ void signalHacked() {
 
     Serial.println(attack_labels[current_attack]);
 
+    // Signal by flashing keyvalid led
     for (size_t i = 0; i < 5; i++) {
         digitalWrite(LED_KEY_VALID, HIGH);
         delay(200);
