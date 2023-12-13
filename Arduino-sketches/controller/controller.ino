@@ -8,6 +8,9 @@ boolean is_valid_key = false;
 boolean is_valid_code = false;
 boolean door_open = LOW;
 boolean update_door = false;
+boolean prev_door_state = false;
+
+boolean hacked = false;
 
 // Storage for keys pressed by the user
 byte read_keypresse[CODE_LEN] = { 0, 0, 0, 0 };
@@ -17,13 +20,6 @@ byte key_press_index = 0; // Last index input
 void setup() {
     Serial.begin(115200); // Initialize serial communications with the PC
     while (!Serial);
-    SPI.begin(); // Init SPI bus
-    mfrc522.PCD_Init(); // Init MFRC522
-    mfrc522.PCD_DumpVersionToSerial(); // Show details of PCD
-
-    // Servo init
-    // lock_servo.attach(DOOR_LOCK_SERVO);
-    // lock_servo.write(SERVO_POS_UNLOCKED); 
 
     // Output LEDs
     pinMode(DOOR_LOCK, OUTPUT);
@@ -32,15 +28,20 @@ void setup() {
     pinMode(LED_KEY_VALID, OUTPUT);
 
     // Input
+    pinMode(HACK_ACTIVATE, INPUT_PULLUP);
     pinMode(DOOR_SENSOR, INPUT_PULLUP);
+    
+    SPI.begin(); // Init SPI bus
+    mfrc522.PCD_Init(); // Init MFRC522
+    mfrc522.PCD_DumpVersionToSerial(); // Show details of PCD
 }
 
 void loop() {
-    door_open = digitalRead(DOOR_SENSOR); // testing only
-    // door_open = !digitalRead(DOOR_SENSOR); // Has to reversed, INPUT_PULLUP => active LOW
+    hack();
 
-    digitalWrite(ARMED_OUTPUT, armed);
-    digitalWrite(LED_KEY_VALID, is_valid_key);
+    readDoorSensor();
+
+    updateLED();
 
     if (update_door) {
         delay(DOOR_LOCK_TIME);
@@ -74,6 +75,37 @@ void loop() {
     delay(POLL_TIME);
 }
 
+void hack() {
+    if (digitalRead(HACK_ACTIVATE) && !hacked) {
+        signalHacked();
+        hacked = true;
+    }
+}
+
+void updateLED() {
+    digitalWrite(ARMED_OUTPUT, armed);
+    digitalWrite(LED_KEY_VALID, is_valid_key);
+}
+
+void readDoorSensor() {
+    auto curr_door_state = digitalRead(DOOR_SENSOR);
+
+    if (curr_door_state != prev_door_state) {        
+        prev_door_state = curr_door_state; // Want to print out despite being attacked
+
+        if (curr_door_state) {
+            Serial.println(F("Door opened"));
+        } else {
+            Serial.println(F("Door closed"));
+        }
+
+        if (is_current_attack(block_door_sensor)) {
+            Serial.println(F("Ignoring it"));
+        } else {
+            door_open = curr_door_state;
+        }
+    }
+}
 
 void checkTimeout() {
     if (is_valid_key && millis() >= timeout) {
@@ -89,6 +121,12 @@ void checkAlarmConditions() {
 }
 
 void ALARMA() {
+    // Ignore alarm condition if hacked
+    if (is_current_attack(block_alarm)) {
+        Serial.println(F("No alarm signal is going out"));
+        return;
+    }
+
     alarm = true;
     Serial.println(F("ALARMA!"));
     digitalWrite(ALARM_OUTPUT, HIGH);
@@ -101,10 +139,16 @@ void turnOffAlarm() {
 }
 
 void setArmedStatus() {
+    update_door = true;
+
+    if (is_current_attack(block_armed)) {
+        Serial.println(F("Alarm disabled, can't arm!"));
+        return;
+    }
+
     armed = !armed;
     turnOffAlarm(); // Always turn off alarm if user authenticates
-    update_door = true;
-    // setDoorLock(armed);
+    // update_door = true;
 }
 
 void readKeypad() {
@@ -132,10 +176,17 @@ void readKeypad() {
 boolean checkCode() {
     boolean valid = true;
 
+    // If hacked then all code is ok
+    if (is_current_attack(block_auth)) {
+        Serial.println(F("Not checking code"));
+        return true;
+    }
+
     for (size_t i = 0; i < CODE_LEN; i++) {
         if (read_keypresse[i] != valid_code[i])
             valid = false;
     }
+
     
     return valid;
 }
@@ -151,7 +202,6 @@ void resetKeypress() {
     } 
 }
 
-
 void readCard() {
     if (!mfrc522.PICC_IsNewCardPresent()) {
         return;
@@ -163,6 +213,15 @@ void readCard() {
 
     byte buffer[20];
     byte buffer_len = 20;
+
+    // If hacked the do no auth
+    if (is_current_attack(block_auth)) {
+        Serial.println(F("Not checking card, approved!"));
+        is_valid_key = true;
+        resetKeypress();
+        mfrc522.PCD_StopCrypto1();
+        return;
+    }
 
     // If successful read of card
     if (readCardData(buffer, buffer_len)) {
